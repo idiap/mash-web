@@ -1,0 +1,30 @@
+﻿{% extends "heuristics/base_heuristics_large.html" %}
+
+{% block title %}{{ block.super }} - Heuristics{% endblock %}
+
+{% block scripts %}
+    {% if mode.can_display_tools or mode.can_upload %}
+        <script src="/js/jquery.js" type="text/javascript"></script>
+        <script src="/js/jquery-ui.js" type="text/javascript"></script>
+        <script src="/js/jquery.alerts.js" type="text/javascript"></script>
+    {% endif %}
+    
+    {% include "heuristics/embedded_list_scripts.html" %}
+    {% include "heuristics/heuristics_tools.html" %}
+    {% include "heuristics/heuristics_upload.html" %}
+{% endblock scripts %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/heuristics_list.css" />
+
+    {% if mode.can_display_tools or mode.can_upload %}
+        <link href="/css/jquery.alerts.css" rel="stylesheet" type="text/css" media="screen" />
+        <link rel="stylesheet" href="/css/heuristics_tools.css" />
+    {% endif %}
+{% endblock stylesheets %}
+
+
+{% block content %}
+    {{ html_list|safe }}
+{% endblock content %}

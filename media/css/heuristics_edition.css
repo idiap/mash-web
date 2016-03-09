@@ -1,0 +1,189 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the 'Edit heuristics details' page
+*
+*******************************************************************************/
+
+h2
+{
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    color: #993300;
+    text-align: center;
+}
+
+
+form#details
+{
+    font-size: 14px;
+}
+
+
+form#details input#id_name
+{
+    width: 99%;
+    font-family: Arial;
+    font-size: 14px;
+    border: 1px solid #606060;
+    padding: 1px;
+}
+
+
+form#details textarea
+{
+    width: 99%;
+    border: 1px solid #606060;
+    padding: 1px;
+}
+
+
+form#details textarea#id_summary
+{
+    font-family: Arial;
+    font-size: 14px;
+    height: 7em;
+}
+
+
+form#details textarea#id_description
+{
+    height: 25em;
+}
+
+
+form#details fieldset
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+
+form#details dl
+{
+    margin-top: 16px;
+    margin-bottom: 0px;
+}
+
+
+form#details dt
+{
+    display: block;
+    float: left;
+    width: 9em;
+}
+
+
+form#details dd
+{
+    margin-left: 9em;
+}
+
+
+form#details dd a.heuristic_link
+{
+    font-weight: bold;
+    color: #993300;
+    text-decoration: none;
+}
+
+
+
+form#details dd a.heuristic_link:hover
+{
+    text-decoration: underline;
+}
+
+
+form#details dd a.delete
+{
+    width: 16px;
+    height: 16px;
+    display: block;
+    background-image: url(/images/heuristic_delete.png);
+    float: left;
+    margin-right: 4px;
+}
+
+
+form#details dd a.add
+{
+    width: 16px;
+    height: 16px;
+    display: block;
+    background-image: url(/images/heuristic_add.png);
+    float: left;
+    margin-right: 4px;
+}
+
+
+form#details span
+{
+    color: #000000;
+    margin-right: 10px;
+}
+
+
+form#details span.help
+{
+    color: #707070;
+    font-size: 12px;
+}
+
+
+form#details span.error
+{
+    color: #FF0000;
+    font-size: 14px;
+}
+
+
+form#details ul
+{
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+    padding: 0px;
+    margin-left: 0px;
+}
+
+
+form#details ul li
+{
+    margin-left: 0px;
+}
+
+
+form#details ul input
+{
+    margin-left: 0px;
+}
+
+
+form#details ul.errorlist
+{
+    color: #FF0000;
+}
+
+
+form#details div.buttons
+{
+    margin-top: 20px;
+    text-align: center;
+}
+
+
+form#details input.button
+{
+    border: 1px solid #B0B0B0;
+    background-color: #FAFAFA;
+    background-image: url(/images/bg_button.gif);
+    color: #000000;
+    padding: 1px 10px;
+    width: auto;
+    text-decoration: none;
+    font-size: 0.9em;
+    text-align:center;
+    margin-left: 4px;
+}

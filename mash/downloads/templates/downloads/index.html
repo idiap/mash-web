@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ block.super }} - Downloads{% endblock %}
+
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="/css/downloads.css" />
+{% endblock stylesheets %}
+
+
+{% block content %}
+
+	{% for entry in public_entries %}
+        <div class="download-box">
+
+            <p class="download-title">{{ entry.name }}{% if entry.version %} {{ entry.version }}{% endif %}</p>
+
+			{% if entry.description %}
+				<p class="download-text">{{ entry.description|safe }}</p>
+			{% endif %}
+
+			<ul>
+				{% for file in entry.files.all %}
+					<li><a href="{{ file.file.url }}">{{ file.filename }}</a> ({{ file.file.size|filesizeformat }})</li>
+				{% endfor %}
+			</ul>
+
+        </div>
+	{% endfor %}
+
+    {% if private_entries %}
+        <p class="private-downloads-title">For project members only</p>
+
+    	{% for entry in private_entries %}
+            <div class="download-box">
+
+                <p class="download-title">{{ entry.name }}{% if entry.version %} {{ entry.version }}{% endif %}</p>
+
+    			{% if entry.description %}
+    				<p class="download-text">{{ entry.description|safe }}</p>
+    			{% endif %}
+
+    			<ul>
+    				{% for file in entry.files.all %}
+    					<li><a href="{{ file.file.url }}">{{ file.filename }}</a> ({{ file.file.size|filesizeformat }})</li>
+    				{% endfor %}
+    			</ul>
+
+            </div>
+    	{% endfor %}
+	{% endif %}
+	
+{% endblock content %}

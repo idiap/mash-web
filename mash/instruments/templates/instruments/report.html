@@ -1,0 +1,83 @@
+{% extends "instruments/base_instruments.html" %}
+
+{% block title %}{{ block.super }} - Data report #{{ report.id }}{% endblock %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/details_box.css" />
+    <link rel="stylesheet" href="/css/snippets.css" />
+
+    {% for stylesheet in css_files %}
+        <link rel="stylesheet" href="{{ stylesheet }}" />
+    {% endfor %}
+{% endblock stylesheets %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="/js/jquery.js" type="text/javascript"></script>
+    <script src="/js/jquery-ui.js" type="text/javascript"></script>
+
+    {% for script in js_files %}
+        <script type="text/javascript" src="{{ script }}"></script>
+    {% endfor %}
+    
+    {% include "instruments/snippets_generation.html" %}
+    
+{% endblock scripts %}
+
+
+{% block content %}
+    
+    {% for snippet in snippets %}
+        <div class="details_box">
+            <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>{{ snippet.view.title }}</td></tr></tbody></table></div></a>
+            <div id="{{ snippet.container_id }}" class="content green snippet">
+                {% ifequal snippet.status "AVA" %}
+                    {{ snippet.content|safe }}
+                {% else %}
+                    <img class="progress" src="/images/progress.gif" />
+                    <p class="progress">Generation in progress...</p>
+                {% endifequal %}
+            </div>
+        </div>
+    {% endfor %}
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+        	$('.details_box .details_header').click(function() {
+        		var iconElement = $(this).find('.details_icon');
+        		var details_box = $(this).closest('.details_box');
+
+        		var text = iconElement.text();
+        		if (text == '+')
+        		{
+        		    iconElement.text('-');
+        		    details_box.removeClass('collapsed');
+        		}
+        		else
+        		{
+        		    iconElement.text('+');
+        		    details_box.addClass('collapsed');
+        		}
+
+        		$(this).next().slideToggle('fast');
+
+        		return false;
+        	});
+
+
+        {% for snippet in snippets %}
+            {% ifequal snippet.status "AVA" %}
+                if (typeof({{ snippet.view.js_start_function }}) != "undefined")
+                    {{ snippet.view.js_start_function }}();
+            {% else %}
+                getSnippet({{ snippet.id }});
+            {% endifequal %}
+        {% endfor %}
+    	});
+
+    </script>
+
+{% endblock content %}

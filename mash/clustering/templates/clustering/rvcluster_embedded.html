@@ -1,0 +1,38 @@
+<table class="clustering">
+    <tr>
+        <td class="left">
+            <div id="clustering_display">
+                <img id="clustering_progress" src="/images/progress.gif" />
+            </div>
+        </td>
+        <td class="right">
+            <div id="clustering_controls" class="section">
+                <p id="clustering_current_zoom">Zoom: 1.5x</p>
+                <img id="clustering_zoom_in" src="/images/clustering/zoom-in.png" title="Zoom In" />
+                <img id="clustering_zoom_out" src="/images/clustering/zoom-out.png" title="Zoom Out" />
+                <img id="clustering_view_all" src="/images/clustering/zoom-all.png" title="View All" />
+                <br />
+                <img id="clustering_move_up" src="/images/clustering/arrow-up.gif" title="Move Up" />
+                <br />
+                <img id="clustering_move_left" src="/images/clustering/arrow-left.gif" title="Move Left" />
+                <img id="clustering_move_right" src="/images/clustering/arrow-right.gif" title="Move Right" />
+                <br />
+                <img id="clustering_move_down" src="/images/clustering/arrow-down.gif" title="Move Down" />
+            </div>
+            <div id="clustering_options" class="section">
+                <p>Display:</p>
+                <input id="clustering_display_names" type="checkbox" checked="yes">Heuristic names</input>
+                {% ifequal request.user version.heuristic.author %}
+                    <br />
+                    <input id="clustering_display_closest_heuristics" type="checkbox" checked="yes">Only the closest heuristics</input>
+                    <br />
+                    <input id="clustering_display_user_public_heuristics" type="checkbox" checked="yes">My public heuristics</input>
+                    <br />
+                    <input id="clustering_display_user_private_heuristics" type="checkbox" checked="yes">My private heuristics</input>
+                    <br />
+                    <input id="clustering_display_public_heuristics" type="checkbox" checked="yes">Other public heuristics</input>
+                {% endifequal %}
+            </div>
+        </td>
+    </tr>
+</table>

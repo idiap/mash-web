@@ -1,0 +1,12 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display some of the heuristics-related pages
+*
+*******************************************************************************/
+
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+}

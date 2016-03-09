@@ -1,0 +1,81 @@
+{% if mode.can_upload %}
+    <script type="text/javascript" src="/js/ajax.js"></script>
+
+    <script type="text/javascript">
+        
+        // Declarations
+        var xmlhttp = null;
+
+        function file_to_upload_changed(input, buttonName)
+        {
+            var button = $("input#" + buttonName)[0];
+            
+            if (input.value == '')
+            {
+                button.className = 'button disabled';
+            }
+            else
+            {
+                button.className = 'button';
+            }
+        }
+
+        function upload_heuristic(inputName)
+        {
+            var input = $("input#" + inputName)[0];
+
+            if (input.value != '')
+            {
+                $.alerts.okButton = 'I accept';
+                $.alerts.cancelButton = 'Cancel';
+            
+                jConfirm('{{ text_upload_confirmation|safe|addslashes }}', 'Please confirm your choice: upload a heuristic', function(r) {
+                    if (r)
+                    {
+                        // Test if the heuristic name is already taken
+                        xmlhttp = GetXmlHttpObject();
+                        if (xmlhttp == null)
+                        {
+                            // If we can't ask the server, create a new heuristic
+                            document.forms['upload'].submit();
+                            return;
+                        }
+
+                        xmlhttp.onreadystatechange = test_heuristic_name_response;
+                        xmlhttp.open("GET", "/heuristics/test_heuristic_name/?filename=" + input.value, true);
+                        xmlhttp.setRequestHeader('X_REQUESTED_WITH', 'XMLHttpRequest');
+                        xmlhttp.send(null);
+                    }
+                });
+            }
+            
+            return false;
+        }
+        
+        function test_heuristic_name_response()
+        {
+            if (xmlhttp.readyState == 4)
+            {
+                if (xmlhttp.responseText == 'OK')
+                {
+                    document.forms['upload'].submit();
+                }
+                else
+                {
+                    $.alerts.okButton = 'Create a new heuristic';
+                    $.alerts.cancelButton = 'Update an existing heuristic';
+
+                    jConfirm('{{ text_upload_choice|safe|addslashes }}', 'Warning', function(r) {
+                        if (!r)
+                        {
+                            document.forms['upload'].action = '/heuristics/upload_version/' + xmlhttp.responseText + '/';
+                        }
+
+                        document.forms['upload'].submit();
+                    });
+                }
+            }
+        }
+
+    </script>
+{% endif %}

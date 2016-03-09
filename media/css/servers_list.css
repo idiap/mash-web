@@ -1,0 +1,194 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the servers status page
+*
+*******************************************************************************/
+
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+    font-size: 14px;
+}
+
+
+div.servers-list
+{
+    margin-bottom: 30px;
+}
+
+
+div.servers-list h1,
+div#tools h1
+{
+    color: #993300;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+
+p.not-found
+{
+    color: #555555;
+}
+
+
+a.add
+{
+    float: right;
+}
+
+
+div.servers-list table
+{
+    width: 100%;
+    color: #105289;
+    background-color: #D9950C;
+    font-family: Arial;
+    font-size: 12px;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div.servers-list table thead
+{
+    line-height: 2em;
+    color: #FFFFFF;
+    text-align: center;
+    font-weight: bold;
+}
+
+
+div.servers-list table tr.row1
+{
+    background-color: #F0E7DC;
+}
+
+
+div.servers-list table tr.row2
+{
+    background-color: #EBDCCA;
+}
+
+
+div.servers-list table td
+{
+    padding: 5px;
+    border-top: 1px solid #FFFFFF;
+}
+
+
+div.servers-list table td a
+{
+    text-decoration: none;
+    color: #105289;
+    font-weight: bold;
+}
+
+
+div.servers-list table td a:hover
+{
+    text-decoration: underline;
+    color: #BC2A4D;
+}
+
+
+div.servers-list table td.online_test
+{
+    text-align: center;
+    width: 6em;
+    padding: 0px;
+}
+
+
+div.servers-list table td.name
+{
+    text-align: center;
+}
+
+
+div.servers-list table td.address
+{
+    text-align: center;
+    width: 12em;
+}
+
+
+div.servers-list table td.subtype
+{
+    text-align: center;
+    width: 12em;
+}
+
+
+div.servers-list table td.status
+{
+    text-align: center;
+    width: 12em;
+}
+
+
+div.servers-list table td.tools
+{
+    text-align: center;
+    width: 6em;
+}
+
+
+div.servers-list span.tool
+{
+    float: right;
+    padding-left: 4px;
+}
+
+
+div.servers-list td.tools span.hidden
+{
+    display: none;
+}
+
+
+div.servers-list td.tools a
+{
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+
+div.servers-list td.tools a.identify
+{
+    background-image: url(/images/icon_identify.png);
+}
+
+
+div#tools p
+{
+    color: #FF0000;
+    font-size: 14px;
+    font-style: italic;
+}
+
+
+div#tools a
+{
+    text-decoration: none;
+    color: #105289;
+    font-weight: bold;
+}
+
+
+div#tools a:hover
+{
+    text-decoration: underline;
+    color: #BC2A4D;
+}

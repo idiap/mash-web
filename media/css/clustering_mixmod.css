@@ -1,0 +1,85 @@
+div.mixmod
+{
+    color: #000000;
+    background-color: #AD3119;
+    font-family: Arial;
+    font-size: 12px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 40px;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    width: 600px;
+}
+
+
+div.mixmod table
+{
+    width: 100%;
+    font-size: 12px;
+}
+
+
+div.mixmod table thead
+{
+    line-height: 2em;
+    color: #FFFFFF;
+}
+
+
+div.mixmod table th
+{
+    color: #FFFFFF;
+}
+
+
+div.mixmod table th.cluster
+{
+    color: #FFFFFF;
+    width: 20%;
+}
+
+
+div.mixmod table tr.row1
+{
+    background-color: #F0F0F0;
+}
+
+
+div.mixmod table tr.row2
+{
+    background-color: #E0E0E0;
+}
+
+
+div.mixmod table td
+{
+    padding: 5px;
+    border-top: 1px solid #FFFFFF;
+}
+
+
+div.mixmod table td.cluster
+{
+    text-align: center;
+    width: 20%;
+}
+
+
+div.mixmod table td a
+{
+    text-decoration: none;
+    color: #000000;
+    font-weight: bold;
+}
+
+
+div.mixmod table td a:hover
+{
+    text-decoration: underline;
+    color: #993300;
+}

@@ -1,0 +1,140 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the contests list page
+*
+*******************************************************************************/
+
+div.contests_list
+{
+    margin-bottom: 0;
+}
+
+
+div.contests_list h1
+{
+    color: #993300;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+
+div.contests_list table
+{
+    width: 100%;
+    background-color: #2CB618;
+    color: #007000;
+    font-family: Arial;
+    font-size: 12px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div.contests_list table thead
+{
+    line-height: 2em;
+    color: #FFFFFF;
+    text-align: center;
+    font-weight: bold;
+}
+
+
+div.contests_list table th
+{
+    color: #FFFFFF;
+}
+
+
+div.contests_list table th a
+{
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+
+div.contests_list table th a:hover
+{
+    text-decoration: underline;
+}
+
+
+div.contests_list table tr.row1
+{
+    background-color: #C5ECAD;
+}
+
+
+div.contests_list table tr.row2
+{
+    background-color: #B6DE9F;
+}
+
+
+div.contests_list table td
+{
+    padding: 5px;
+    border-top: 1px solid #FFFFFF;
+}
+
+
+div.contests_list table td a
+{
+    color: #007000;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+div.contests_list table td a:hover
+{
+    text-decoration: underline;
+    color: #BC2A4D;
+}
+
+
+div.contests_list table td.name
+{
+    text-align: center;
+    width: 8%;
+}
+
+
+div.contests_list table td.summary
+{
+}
+
+
+div.contests_list table td.entries
+{
+    text-align: center;
+    width: 7em;
+}
+
+
+div.contests_list table td.best_entry
+{
+    text-align: center;
+    width: 12%;
+}
+
+
+div.contests_list table td.results
+{
+    text-align: center;
+    width: 8%;
+}
+
+
+div.contests_list table td.date
+{
+    text-align: center;
+    width: 12em;
+}

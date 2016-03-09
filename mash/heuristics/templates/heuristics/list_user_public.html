@@ -1,0 +1,37 @@
+{% load assign %}
+
+{% for heuristic in heuristics %}
+    
+    {% assign rowclass "" %}
+    {% assign title1 "" %}
+    {% assign title2 "" %}
+    {% assign title3 "" %}
+
+    {% ifequal heuristic.latest_public_version.status 'DIS' %}
+        {% assign rowclass "error" %}
+        {% assign title1 "The heuristic '" %}
+        {% assign title2 heuristic.latest_public_version.fullname %}
+        {% assign title3 "' has been disabled, due to an error" %}
+    {% endifequal %}
+
+    <tr class="{% cycle 'row1' 'row2' %} {{ rowclass }}" title="{{ title1 }}{{ title2 }}{{ title3 }}">
+        <td class="name"><a href="/heuristics/v{{ heuristic.latest_public_version.id }}">{{ heuristic.latest_public_version.shortname }}</a></td>
+        <td class="rank">{% if heuristic.latest_public_version.rank %}{{ heuristic.latest_public_version.rank }}{% else %}-{% endif %}</td>
+        <td class="versions">{{ heuristic.visible_versions_count }}</td>
+        <td class="description">{% if heuristic.short_description %}{{ heuristic.short_description }}{% else %}&nbsp;{% endif %}</td>
+        <td class="date">{{ heuristic.latest_public_version.upload_date|date:"N j, Y, P" }}</td>
+
+        {% if mode.can_display_tools %}
+            <td class="tools tools4">
+	            {% if heuristic.post %}
+	                <span class="tool"><a class="forum" title="Talk about this heuristic on the forum" href="/heuristics/topic/{{ heuristic.id }}/"></a></span>
+	            {% else %}
+	                <span class="tool"><a class="forum_no_comment" title="Talk about this heuristic on the forum (no comment yet)" href="/heuristics/topic/{{ heuristic.id }}/"></a></span>
+	            {% endif %}
+
+               	<span class="tool"><a class="upgrade" title="Upload a new version of the heuristic" href="/heuristics/{{ heuristic.id }}/?upload=1"></a></span>
+               	<span class="first_tool"><a class="edit" title="Edit the details of this heuristic" href="/heuristics/edit/{{ heuristic.id }}/"></a></span>
+			</td>
+        {% endif %}
+    </tr>
+{% endfor %}

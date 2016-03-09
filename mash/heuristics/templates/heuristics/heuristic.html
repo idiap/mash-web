@@ -1,0 +1,675 @@
+{% extends "heuristics/base_heuristics_aligned.html" %}
+
+{% block title %}{{ block.super }} - Heuristic '{% ifequal request.user heuristic.author %}{{ version.shortname }}{% else %}{{ version.fullname }}{% endifequal %}'{% endblock %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/details_box.css" />
+    <link rel="stylesheet" href="/css/sourcecode.css" />
+    <link rel="stylesheet" href="/css/heuristics_details.css" />
+
+    {% if not version.is_check_done %}
+        <link rel="stylesheet" href="/css/heuristics_check.css" />
+    {% endif %}
+
+    {% if mode.can_display_tools %}
+        <link rel="stylesheet" href="/css/jquery.alerts.css" />
+    {% endif %}
+
+    <link rel="stylesheet" href="/css/heuristics_tools.css" />
+    <link rel="stylesheet" href="/css/heuristics_code.css" />
+    <link rel="stylesheet" href="/css/heuristics_list.css" />
+
+    <link rel="stylesheet" href="/css/tools_error_report.css" />
+
+    {% if signature_status.processed %}
+        <link rel="stylesheet" href="/css/clustering.css" />
+    {% endif %}
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+
+    {{ block.super }}
+
+    <!--[if lte IE 8]><script type="text/javascript" src="/js/excanvas.min.js"></script><![endif]-->
+
+    <script src="/js/jquery.js" type="text/javascript"></script>
+
+    {% if mode.can_display_tools or mode.can_upload %}
+        <script src="/js/jquery-ui.js" type="text/javascript"></script>
+        <script src="/js/jquery.alerts.js" type="text/javascript"></script>
+    {% endif %}
+
+    {% include "heuristics/embedded_list_scripts.html" %}
+    {% include "heuristics/heuristics_tools.html" %}
+    {% include "heuristics/heuristics_upload_version.html" %}
+
+    {% include "tools/scripts_error_report.html" %}
+
+    {% if signature_status.processed %}
+        {% include "clustering/rvcluster_scripts.html" %}
+    {% endif %}
+
+    {% if not version.is_check_done %}
+        <script src="/js/ajax.js" type="text/javascript"></script>
+
+        <script type="text/javascript">
+
+            // Declarations
+            var xmlhttp     = null;
+            var testResult  = false;
+            var nameEntered = false;
+
+
+            //------------------------------------------------------------------------------------------
+            // Called when the status of the test of the heuristic is received
+            //------------------------------------------------------------------------------------------
+            function stateChanged()
+            {
+                if (xmlhttp.readyState == 4)
+                {
+                    var result = '';
+
+                    // Retrieve the XML document containing the status
+                    var xmlDoc = xmlhttp.responseXML.documentElement;
+
+                    // Process each phase information contained in the status report
+                    var phaseElements = xmlDoc.getElementsByTagName("phase");
+
+                    for (var i = 0; i < phaseElements.length; ++i)
+                    {
+                        // Retrieve the infos about the phase
+                        var phase       = phaseElements[i].getElementsByTagName("name")[0].firstChild.nodeValue;
+                        var status      = phaseElements[i].getElementsByTagName("status")[0].firstChild.nodeValue;
+                        var statustext  = phaseElements[i].getElementsByTagName("statustext")[0].firstChild.nodeValue;
+                        var details     = '';
+
+                        // Retrieve the HTML elements that we must modify
+                        var elStatus    = document.getElementById("phase_"  + phase + "_status");
+                        var elDetails   = document.getElementById("phase_"  + phase + "_details");
+
+                        // Display the status text
+                        elStatus.innerHTML = statustext;
+                        elStatus.className = status;
+
+                        result = status;
+
+                    {% if not html_error_reports %}
+                        // Error reports?
+                        var error_reports = phaseElements[i].getElementsByTagName("errorreport");
+                        if (error_reports.length > 0)
+                        {
+                            var elReport = document.getElementById("error_report_content");
+
+                            details = 'See the error report below';
+                            error_reports = error_reports[0];
+
+                            var error_report = error_reports.firstChild;
+                            while (error_report != null)
+                            {
+                                elReport.innerHTML += error_report.nodeValue;
+                                error_report = error_report.nextSibling;
+                            }
+
+                            var elReportBox = document.getElementById("error_report");
+                            elReportBox.className = 'details_box collapsed';
+
+                            setupStackTraces();
+
+                            $('#error_report .details_header').click();
+                        }
+                    {% endif %}
+
+
+                        if (elDetails)
+                        {
+                            if (details == '')
+                            {
+                                var list = phaseElements[i].getElementsByTagName("details");
+                                if (list.length > 0)
+                                {
+                                    var detailsNode = list[0].firstChild;
+                                    details = (detailsNode ? detailsNode.nodeValue : '');
+                                }
+                            }
+
+                            if (details != '')
+                            {
+                                elDetails.innerHTML = "<pre>" + details + "</pre>";
+                                elDetails.className = "details";                    }
+                            else
+                            {
+                                elDetails.className = "details hidden";
+                            }
+                        }
+
+                        // Evaluation phase?
+                        if (phase == 'evaluation')
+                        {
+                            // Retrieve the HTML elements that we must modify
+                            var table = document.getElementById("evaluation_results");
+                            var body  = table.getElementsByTagName('tbody')[0];
+
+                            // Retrieve the list of configurations
+                            var configurations = phaseElements[i].getElementsByTagName("configuration");
+
+                            if (configurations.length > 0)
+                                table.style.visibility = "visible";
+
+                            // For each configuration results
+                            for (var j = 0; j < configurations.length; ++j)
+                            {
+                                // Retrieve the infos about the configuration
+                                var id            = configurations[j].getElementsByTagName("id")[0].firstChild.nodeValue;
+                                var name          = configurations[j].getElementsByTagName("name")[0].firstChild.nodeValue;
+                                var status        = configurations[j].getElementsByTagName("status")[0].firstChild.nodeValue;
+                                var statusText    = configurations[j].getElementsByTagName("statustext")[0].firstChild.nodeValue;
+                                var trainMean     = null;
+                                var testMean      = null;
+                                var trainVariance = null;
+                                var testVariance  = null;
+                                var rank          = '...';
+
+                                var list = configurations[j].getElementsByTagName("meantrainerror");
+                                if (list.length > 0)
+                                {
+                                    trainMean = list[0].firstChild.nodeValue;
+                                }
+
+                                list = configurations[j].getElementsByTagName("meantesterror");
+                                if (list.length > 0)
+                                {
+                                    testMean = list[0].firstChild.nodeValue;
+                                }
+
+                                list = configurations[j].getElementsByTagName("trainerrorvariance");
+                                if (list.length > 0)
+                                {
+                                    trainVariance = list[0].firstChild.nodeValue;
+                                }
+
+                                list = configurations[j].getElementsByTagName("testerrorvariance");
+                                if (list.length > 0)
+                                {
+                                    testVariance = list[0].firstChild.nodeValue;
+                                }
+
+                                list = configurations[j].getElementsByTagName("rank");
+                                if (list.length > 0)
+                                {
+                                    rank = list[0].firstChild.nodeValue;
+                                }
+
+                                // Create the table row for the configuration, if necessary
+                                var row = createConfigurationRow(body, id);
+
+                                // Update the configuration row
+                                setConfigurationResults(row, name, status, statusText, trainMean, testMean, trainVariance, testVariance, rank);
+                            }
+
+                            // Display the rank of the heuristic version
+                            if (configurations.length > 0)
+                            {
+                                var rank = '...';
+
+                                list = phaseElements[i].getElementsByTagName("rank");
+                                if (list.length > 0)
+                                {
+                                    rank = list[0].firstChild.nodeValue;
+                                }
+
+                                // Create the table row for the rank, if necessary
+                                var row = createRankRow(body);
+
+                                // Update the content of the row
+                                setRank(row, rank);
+                            }
+                        }
+                    }
+
+                    switch (result)
+                    {
+                        case "done":
+                            document.getElementById("heuristic_check_progress_image").style.display = 'none';
+                            document.getElementById("heuristic_check_info").className = "done";
+                            document.getElementById("heuristic_check_info").innerHTML = 'Your heuristic passed all the tests!';
+                            setTimeout("reload()", 10000);
+                            break;
+
+                        case "error":
+                            document.getElementById("heuristic_check_progress_image").style.display = 'none';
+                            document.getElementById("heuristic_check_info").className = "error";
+                            document.getElementById("heuristic_check_info").innerHTML = "Your heuristic didn't passed the tests! Please fix the problem and upload a new source file.";
+                            document.getElementById('heuristics_upload_bar').className = '';
+                            break;
+
+                        default:
+                            setTimeout("getStatus()", 3000);
+                    }
+                }
+            }
+
+
+            //------------------------------------------------------------------------------------------
+            // Asynchronously retrieve the status of the test of the heuristic (the function
+            // 'stateChanged' is called when the status is received)
+            //------------------------------------------------------------------------------------------
+            function getStatus()
+            {
+                xmlhttp = GetXmlHttpObject();
+                if (xmlhttp == null)
+                {
+                    return;
+                }
+
+                xmlhttp.onreadystatechange = stateChanged;
+                xmlhttp.open("GET", "/heuristics/status/{{ version.id }}/", true);
+                xmlhttp.setRequestHeader('X_REQUESTED_WITH', 'XMLHttpRequest');
+                xmlhttp.send(null);
+            }
+
+            function reload()
+            {
+                window.location.href = window.location.href;
+            }
+
+            function createConfigurationRow(body, id)
+            {
+                // Try fetching raw
+                var row = document.getElementById("config_" + id);
+
+                if (row)
+                {
+                    // Remove all cells
+                   removeRowCells(row);
+                }
+                else
+                {
+                    // Create an empty row
+                    row = document.createElement('tr');
+                    row.setAttribute("id", "config_" + id);
+                    body.appendChild(row);
+                }
+
+                return row;
+            }
+
+            function createRankRow(body)
+            {
+                // Try fetching raw
+                var row = document.getElementById("rank_row");
+
+                if (row)
+                {
+                    // Remove all cells
+                    removeRowCells(row);
+                }
+                else
+                {
+                    // Create an empty row
+                    row = document.createElement('tr');
+                    row.setAttribute("id", "rank_row")
+                    body.appendChild(row);
+                }
+
+                return row;
+            }
+
+            function removeRowCells(row)
+            {
+                while(row.hasChildNodes())
+                    row.removeChild(row.firstChild);
+            }
+
+            function setConfigurationResults(row, name, status, status_text, trainMean, testMean, trainVariance, testVariance, rank)
+            {
+                var td1 = document.createElement('td');
+                var td2 = document.createElement('td');
+                var td4 = document.createElement('td'); //Rank column
+
+                td1.innerHTML = name; //Configuration name
+
+                td4.setAttribute("class", "rank");
+                td4.innerHTML = rank;
+
+                // Done, four cells
+                if (status == 'done')
+                {
+                    var td3 = document.createElement('td');
+
+                    td2.setAttribute("class", "error_rate");
+                    td2.innerHTML = trainMean + "% (" + trainVariance + ")";
+
+                    td3.setAttribute("class", "error_rate");
+                    td3.innerHTML = testMean + "% (" + testVariance + ")";
+
+                    row.appendChild(td1);
+                    row.appendChild(td2);
+                    row.appendChild(td3);
+                }
+
+                // Not done, two cells
+                else
+                {
+                    td2.setAttribute("class", status);
+                    td2.setAttribute("colspan", "2");
+                    td2.innerHTML = status_text;
+
+                    row.appendChild(td1);
+                    row.appendChild(td2);
+                }
+
+                // Rank column
+                row.appendChild(td4);
+            }
+
+            function setRank(row, rank)
+            {
+                var tdRankText = document.createElement('td');
+                var tdRankValue = document.createElement('td');
+
+                tdRankText.setAttribute("colspan", "3");
+                tdRankText.innerHTML = "All configurations"
+
+                tdRankValue.setAttribute("class", "rank");
+                tdRankValue.innerHTML = rank
+
+                row.appendChild(tdRankText)
+                row.appendChild(tdRankValue)
+            }
+
+        </script>
+    {% endif %}
+
+{% endblock scripts %}
+
+
+{% block content %}
+
+{% if can_see_check_box %}
+    {% if not version.is_check_done %}
+        <div id="heuristic_check_results">
+            <p id="heuristic_check_info">Your heuristic is being tested...</p>
+            <div class="results">
+                <p class="title">Results:</p>
+
+                <img id="heuristic_check_progress_image" src="/images/progress.gif" />
+
+                {% for phase in phases %}
+                    <dl>
+                        <dt>{{ phase.1 }}:</dt>
+                        <dd id="phase_{{ phase.1|lower }}_status">&nbsp;</dd>
+                        <dd id="phase_{{ phase.1|lower }}_details" class="details hidden"></dd>
+                    </dl>
+                {% endfor %}
+
+                {% if not version.heuristic.simple %}
+                    <dl>
+                        <dt>Evaluation:</dt>
+                        <dd id="phase_evaluation_status">&nbsp;</dd>
+                        <dd id="phase_evaluation_details" class="details hidden"></dd>
+                        <dd>
+                            <table id = "evaluation_results" style="visibility:hidden;" class="spaced">
+                                <thead>
+                                    <tr>
+                                        <th id="h1">Configuration</th>
+                                        <th id="h2">Training error (sd)</th>
+                                        <th id="h3">Test error (sd)</th>
+                                        <th id="h4">Rank</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </dd>
+                    </dl>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+
+    {% if mode.can_upload %}
+        <div id="heuristics_upload_bar" {% if not display_upload_box %}class="hidden"{% endif %}>
+            <ul>
+                <li class="right rightmost">
+                    <form id="upload" method="post" action="/heuristics/upload_version/{{ heuristic.id }}/" enctype="multipart/form-data" onsubmit="return upload_heuristic('id_heuristic_file');">
+                        <input type="file" style="" name="heuristic_file" id="id_heuristic_file" onchange="file_to_upload_changed(this, 'btn_submit_upload');" />
+                        <input type="submit" class="button disabled" name="btn_submit" id="btn_submit_upload" value="Upload"/>
+                    </form>
+                </li>
+                <li class="right">Upload a new version:</li>
+            </ul>
+        </div>
+    {% endif %}
+
+    <div id="heuristic_infos_box">
+        <div class="tools">
+            <p class="name">{% ifequal request.user heuristic.author %}{{ version.shortname }}{% else %}{{ version.fullname }}{% endifequal %}</p>
+
+            {% if not request.user.is_anonymous and heuristic.latest_public_version %}
+                {% if heuristic.post %}
+                    <span class="tool"><a class="forum" title="Talk about this heuristic on the forum" href="/heuristics/topic/{{ heuristic.id }}/"></a></span>
+                {% else %}
+                    <span class="tool"><a class="forum_no_comment" title="Talk about this heuristic on the forum (no comment yet)" href="/heuristics/topic/{{ heuristic.id }}/"></a></span>
+                {% endif %}
+            {% endif %}
+
+            {% if mode.can_display_tools %}
+                {% if not version.public %}
+                    <span class="tool"><a class="delete" title="Delete this version of the heuristic" href="/heuristics/delete/{{ version.id }}/" onclick="return confirm_heuristic_deletion(this);"></a></span>
+                {% endif %}
+
+                {% if version.checked and version.evaluated and not version.public %}
+                    <span class="tool"><a class="publish" title="Publish this version of the heuristic" href="/heuristics/publish/{{ version.id }}/" onclick="return confirm_heuristic_publication(this);"></a></span>
+                {% endif %}
+
+                <span class="tool"><a class="upgrade" title="Upload a new version of the heuristic" href="#" onclick="$('div#heuristics_upload_bar')[0].className = ''; return false;"></a></span>
+                <span class="tool"><a class="edit" title="Edit the details of this heuristic" href="/heuristics/edit/{{ heuristic.id }}/"></a></span>
+            {% endif %}
+        </div>
+
+        <table id="heuristic_infos_box_table">
+            <tr>
+                <td valign="top" class="left">
+                    <div>
+                        {% if author_profile and author_profile.forum_user and author_profile.forum_user.user_avatar %}
+                            <img alt="User avatar" src="/forum/download/file.php?avatar={{ author_profile.forum_user.user_avatar }}"/>
+                        {% else %}
+                            <img alt="User avatar" src="/images/default_avatar.jpg"/>
+                        {% endif %}
+                        {% if author_profile and author_profile.forum_user and author_profile.forum_user.user_rank and author_profile.forum_user.user_rank.rank_title %}
+                            <p>{{ author_profile.forum_user.user_rank.rank_title }}</p>
+                        {% endif %}
+                    </div>
+                </td>
+                <td valign="top">
+                    <div class="infos">
+                        <dl>
+                            <dt>Author:</dt>
+                            <dd><a href="/accounts/profile/{{ heuristic.author.id }}">{{ heuristic.author.username }}</a></dd>
+                            <dt>Upload date:</dt>
+                            <dd {% if not heuristic.short_description %}{% if not description %}class="bottomspace"{% endif %}{% endif %}>{{ version.upload_date|date:"N j, Y, P" }}</dd>
+
+                            {% ifequal request.user heuristic.author %}
+                                <dt>Accessibility:</dt>
+                                <dd {% if not version.public %}class="bottomspace"{% endif %}>{% if version.public %}Public{% else %}Private{% endif %}</dd>
+                            {% endifequal %}
+
+                            {% if heuristic.short_description %}
+                                <dt>Summary:</dt>
+                                <dd class="bottomspace justified">{{ heuristic.short_description }}</dd>
+                            {% endif %}
+
+                            {% if description %}
+                                <dt>Description:</dt>
+                                <dd class="bottomspace">{{ description|safe }}</dd>
+                            {% endif %}
+
+                            {% ifequal request.user heuristic.author %}
+                                {% if heuristic.inspiration_heuristics_count %}
+                                    {% for inspiration in heuristic.inspiration_heuristics %}
+                                        <dt>{% if forloop.first %}Inspired by:{% else %}&nbsp;{% endif %}</dt>
+                                        <dd {% if forloop.last %}class="bottomspace"{% endif %}>
+                                            {% if not inspiration.was_deleted %}
+                                                <a href="/heuristics/{{ inspiration.id }}">{{ inspiration.fullname }}</a>
+                                                {% if not inspiration.latest_public_version %}
+                                                    <span>(private)</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="deleted" title="The heuristic '{{ inspiration.fullname }}' has been deleted">{{ inspiration.fullname }}</span>
+                                            {% endif %}
+                                        </dd>
+                                    {% endfor %}
+                                {% endif %}
+                            {% else %}
+                                {% if heuristic.public_inspiration_heuristics_count %}
+                                    {% for inspiration in heuristic.public_inspiration_heuristics %}
+                                        <dt>{% if forloop.first %}Inspired by:{% else %}&nbsp;{% endif %}</dt>
+                                        <dd {% if forloop.last %}class="bottomspace"{% endif %}>
+                                            <a href="/heuristics/{{ inspiration.id }}"{% ifequal inspiration.latest_public_version.status 'DIS' %} class="disabled"{% endifequal %}>{{ inspiration.fullname }}</a>
+                                        </dd>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endifequal %}
+
+                            {% if version.checked and version.evaluated %}
+                                <dt>Evaluation:</dt>
+                                <dd class="bottomspace">
+                                    <table id="evaluation_results">
+                                        <thead>
+                                            <tr>
+                                                <th id="h1">Configuration</th>
+                                                <th id="h2">Training error ( sd )</th>
+                                                <th id="h3">Test error ( sd )</th>
+                                                <th id="h4">Rank</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for evaluation_results in version.sortedEvaluationResults %}
+                                                <tr>
+                                                    {% if evaluation_results.experiment.isDone %}
+                                                        <td>{{ evaluation_results.evaluation_config.name|cut:"template/" }}</td>
+                                                        <td class="error_rate" id="train_{{ evaluation_results.evaluation_config.name|lower }}">{{ evaluation_results.train_text }}</td>
+                                                        <td class="error_rate" id="test_{{ evaluation_results.evaluation_config.name|lower }}">{{ evaluation_results.test_text }}</td>
+                                                        <td class="rank">{{ evaluation_results.rank }}</td>
+                                                    {% else %}
+                                                        <td>{{ evaluation_results.evaluation_config.name }}</td>
+                                                        <td class="error" colspan="3">FAILED</td>
+                                                    {% endif %}
+                                                </tr>
+                                            {% endfor %}
+                                            <tr>
+                                                <td colspan="3">All configurations</td>
+                                                <td class="rank">{{ version.rank }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        {% ifequal version.status "DIS" %}<p class="warning">{{ version.warning }}</p>{% endifequal %}
+    </div>
+
+
+    <div id="error_report" class="details_box collapsed{% if not html_error_reports %} hidden{% endif %}">
+        <a href="#" class="details_header"><div class="details_title"><table><tbody><tr><td class="details_icon">+</td><td>Error reports</td></tr></tbody></table></div></a>
+        <div id="error_report_content" class="content" style="display: none;">
+            <p class="explanation">Due to the following errors, this heuristic will not be useable anymore!</p>
+            {% ifequal request.user heuristic.author %}
+                <p class="explanation">Please fix the problem, and upload a new version of this heuristic.</p>
+            {% endifequal %}
+            {{ html_error_reports|safe }}
+        </div>
+    </div>
+
+
+{% if signature_status %}
+    <div id="clustering_details_box" class="details_box collapsed">
+        <a href="#" class="details_header"><div class="details_title"><table><tbody><tr><td class="details_icon">+</td><td>Heuristics space</td></tr></tbody></table></div></a>
+        <div class="content" style="display: none;">
+            {% if not signature_status.processed %}
+                <p class="explanation">This heuristic is currently processed, please come back later</p>
+            {% else %}
+                {% include "clustering/rvcluster_embedded.html" %}
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+
+{% if html_source_code %}
+    <div class="details_box collapsed">
+        <a href="#" class="details_header"><div class="details_title"><table><tbody><tr><td class="details_icon">+</td><td>Source code</td></tr></tbody></table></div></a>
+        <div class="content" style="display: none;">{{ html_source_code|safe }}</div>
+    </div>
+{% endif %}
+
+
+{% if html_derived_list %}
+    <div class="details_box collapsed">
+        <a href="#" class="details_header"><div class="details_title"><table><tbody><tr><td class="details_icon">+</td><td>Derived heuristics</td></tr></tbody></table></div></a>
+        <div class="content" style="display: none;">{{ html_derived_list|safe }}</div>
+    </div>
+{% endif %}
+
+
+{% if html_versions_list %}
+    <div class="details_box collapsed">
+        <a href="#" class="details_header"><div class="details_title"><table><tbody><tr><td class="details_icon">+</td><td>{% ifequal request.user heuristic.author %}Other versions{% else %}{% if request.user.is_superuser %}Other versions{% else %}Other public versions{% endif %}{% endifequal %}</td></tr></tbody></table></div></a>
+        <div class="content" style="display: none;">{{ html_versions_list|safe }}</div>
+    </div>
+{% endif %}
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+            $('.details_box .details_header').click(function() {
+                var iconElement = $(this).find('.details_icon');
+                var details_box = $(this).closest('.details_box');
+
+                var text = iconElement.text();
+                if (text == '+')
+                {
+                    iconElement.text('-');
+                    details_box.removeClass('collapsed');
+                }
+                else
+                {
+                    iconElement.text('+');
+                    details_box.addClass('collapsed');
+                }
+
+                $(this).next().slideToggle('fast');
+
+                if ((details_box[0].id == 'clustering_details_box') && (details_box[0].plotted == undefined))
+                {
+                    process_gexf('/clustering/results/rvcluster/?heuristic={{ version.id }}');
+                    details_box[0].plotted = true;
+                }
+
+                return false;
+            });
+
+{% if html_error_reports %}
+            setupStackTraces();
+{% endif %}
+
+{% if can_see_check_box %}
+    {% if not version.is_check_done %}
+            getStatus();
+    {% endif %}
+{% endif %}
+
+        });
+
+    </script>
+
+{% endblock content %}

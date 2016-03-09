@@ -1,0 +1,107 @@
+/*******************************************************************************
+*
+* CSS styles for the 'details boxes'
+*
+*******************************************************************************/
+
+
+div.details_box
+{
+    width: 100%;
+    margin-top: 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 40px;
+}
+
+
+div.details_box.collapsed
+{
+    margin-bottom: 10px;
+}
+
+
+div.details_box.hidden
+{
+    display: none;
+}
+
+
+div.details_box .details_header
+{
+    color: #993300;
+    font-size: 16px;
+    font-weight: bold;
+    outline: 0;
+    text-decoration: none;
+}
+
+
+div.details_box .details_header.blue
+{
+    color: #105289;
+}
+
+
+div.details_box .details_header.green
+{
+    color: #007000;
+}
+
+
+div.details_box .details_header img.miniprogress
+{
+    width: 16px;
+    margin-left: 10px;
+}
+
+
+div.details_box .details_title
+{
+    padding-bottom: 3px;
+}
+
+
+div.details_box .details_title table
+{
+    border: 0 none;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+}
+
+
+div.details_box .details_icon
+{
+    width: 10px;
+}
+
+
+div.details_box div.content
+{
+    padding-top: 15px;
+    border-top: 1px solid #AD3119;
+}
+
+
+div.details_box div.content.blue
+{
+    border-top: 1px solid #105289;
+}
+
+
+div.details_box div.content.green
+{
+    border-top: 1px solid #007000;
+}
+
+
+div.details_box div.content p.explanation
+{
+    color: #555555;
+    font-family: Arial;
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    margin-top: 0;
+}

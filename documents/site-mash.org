@@ -1,0 +1,91 @@
+
+* Sections
+
+** With direct links in the upper-right
+
+  register / log in / logged in / profile / admin
+
+** Trough tabs
+
+  1. News
+
+  2. Wiki
+
+  3. Downloads
+
+  4. Members
+
+     Clicking on "profile" in the upper-right corner brings directly
+     to this page, on the user profile.
+
+     - For the user's profile, edition possibilities
+
+     - Identity
+
+     - Awards
+
+  5. Forum
+
+  6. Heuristics
+
+     | Username | Name | #Version | Description | Upload date | Public | Enabled | CPU % |
+
+     - Browse all the existing in the system (shortcut buttons to
+       restrict to his own only, to private / public only, to enabled
+       / disabled only)
+
+     - Upload / delete his own
+
+     - Parametrize which ones are public / private, enabled / disabled
+
+     - Modulate the CPU credit allocation (allocate up to 100% credits
+       over all the public & enabled heuristics)
+
+     - Discussion related functions (initiate a new threads, send a
+       private comment)
+
+  7. Experiments
+
+     - Check results of private / public experiments
+
+* Misc
+
+  If needed:
+
+  - Some sanity check on the number of connections from the same IP in
+    a certain period of time to detect multiple account user.
+
+* Scheduler
+
+  Daemon in charge of running experiments
+
+** Definition of an experiment
+
+  1. Data-set
+
+  2. Machine-learning parametrization
+
+  3. Used heuristics
+
+** Policy
+
+   Three schedulers run in parallel, one for the private experiments,
+   one for the public, and one for the consortium experiments.
+
+   The private one has a setup with a small data set, a
+   machine learning parametrization with reduced computational cost,
+   and only the private heuristics of one user. The results it
+   produces are private to that user.
+
+   The public one has setups with large data sets, full scale
+   learning and all public and enabled heuristics.
+
+   The consortium scheduler takes experiment definitions from a queue,
+   where they can be inserted by staff members.
+
+* Deployment of the machine learning platform
+
+  The members of the consortium should be able to deploy the machine
+  learning core on their machines, and to remain up-to-date for the
+  source code of the heuristics.
+

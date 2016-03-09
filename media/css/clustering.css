@@ -1,0 +1,84 @@
+div#clustering_display
+{
+    cursor: move;
+    width: 600px;
+    height: 600px;
+}
+
+div.tickLabel
+{
+    display: none;
+}
+
+
+table.clustering
+{
+    width: 100%;
+}
+
+
+table.clustering td.left
+{
+    width: 600px;
+}
+
+
+table.clustering td.right
+{
+    vertical-align: top;
+}
+
+
+table.clustering td.right div.section
+{
+    margin-left: auto;
+    width: 200px;
+}
+
+
+p#clustering_current_zoom
+{
+    font-size: 14px;
+    margin: 10px 0 5px;
+}
+
+
+img#clustering_progress
+{
+    width: 32px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+img#clustering_move_up,
+img#clustering_move_down
+{
+    margin-left: 28px;
+}
+
+
+img#clustering_move_left
+{
+    margin-left: 9px;
+    margin-top: 3px;
+}
+
+
+img#clustering_move_right
+{
+    margin-left: 15px;
+}
+
+
+div#clustering_options
+{
+    font-size: 14px;
+    margin-top: 100px;
+}
+
+
+div#clustering_options p
+{
+    margin: 0 0 5px;
+}

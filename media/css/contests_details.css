@@ -1,0 +1,496 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the 'contest details' page
+*
+*******************************************************************************/
+
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+    font-size: 14px;
+}
+
+
+div.infos_box
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 13px;
+    background-color: #CEF6B5;
+    padding: 4px 10px 10px 10px;
+    margin-bottom: 30px;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+div.infos_box *
+{
+    padding: 0;
+    margin: 0;
+}
+
+
+div.infos_box div.tools p.name
+{
+    font-size: 18px;
+    font-weight: bold;
+    color: #007000;
+    margin-top: 5px;
+    text-align: center;
+}
+
+
+div.infos_box div.description
+{
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: justify;
+}
+
+
+div.infos_box div.description h3
+{
+    margin-bottom: 10px;
+}
+
+
+a#infos_control
+{
+    display: block;
+    text-align: right;
+    font-weight: bold;
+    color: #007000;
+    text-decoration: none;
+}
+
+
+a#infos_control:hover
+{
+    text-decoration: underline;
+}
+
+
+div.infos_box div.section
+{
+    margin-top: 20px;
+}
+
+
+div.infos_box div.section p.title
+{
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+
+div.infos_box div.section p.content
+{
+    margin-left: 10px;
+}
+
+
+div.infos_box div.section dt
+{
+    width: 9em;
+    text-align: right;
+    float: left;
+}
+
+
+div.infos_box div.section dd
+{
+    margin-left: 9.5em;
+    padding-left: 5px;
+    margin-bottom: 2px;
+}
+
+
+div.infos_box div.section dd.bottomspace
+{
+    margin-bottom: 20px;
+}
+
+
+div.infos_box div.section dd.justified
+{
+    text-align: justify;
+}
+
+
+div.infos_box div.section dd span
+{
+    font-weight: bold;
+}
+
+
+div.infos_box div.section dd span.in_progress,
+div.infos_box div.section dd span.future
+{
+    color: #0000FF;
+}
+
+
+div.infos_box div.section dd span.done
+{
+    color: #007000;
+}
+
+
+div.infos_box div.section ul
+{
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+}
+
+
+div.infos_box div.section ul.labels_list
+{
+    list-style-type: disc;
+}
+
+
+div.infos_box div.section li
+{
+    margin-left: 20px;
+}
+
+
+div.infos_box div.section a,
+div.infos_box div.description a
+{
+    font-weight: bold;
+    color: #007000;
+    text-decoration: none;
+}
+
+
+div.infos_box div.section a:hover,
+div.infos_box div.description a:hover
+{
+    text-decoration: underline;
+}
+
+
+div.infos_box div.section a.disabled
+{
+    color: #FF0000;
+}
+
+
+div.infos_box div.section li span.deleted
+{
+    color: #000000;
+    font-weight: bold;
+}
+
+
+div.infos_box div.tools a
+{
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+
+div.infos_box div.tools span.tool
+{
+    float: right;
+    padding-left: 4px;
+    position: relative;
+    top: -20px;
+}
+
+
+div.infos_box div.tools a.forum
+{
+    background-image: url(/images/heuristic_forum.png);
+}
+
+
+div.infos_box div.tools a.forum_no_comment
+{
+    background-image: url(/images/heuristic_forum_no_comment.png);
+}
+
+
+div#enter_contest table.heuristics_list
+{
+    margin-left: auto;
+    margin-right: auto;
+    width: 80%;
+}
+
+
+div#enter_contest td.explanation
+{
+    padding-right: 25px;
+}
+
+
+div#enter_contest td.explanation p,
+div#enter_contest td.explanation li
+{
+    color: #555555;
+    font-family: Arial;
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 0;
+}
+
+
+div#enter_contest td.explanation li span
+{
+    color: #FF0000;
+}
+
+
+div#enter_contest td.explanation p.no_heuristic
+{
+    color: #007000;
+    font-style: normal;
+    font-weight: bold;
+}
+
+
+div#enter_contest td.explanation p.nb_private_heuristics
+{
+    color: #007000;
+    font-style: normal;
+}
+
+
+div#enter_contest td.heuristics_list
+{
+    font-size: 12px;
+    width: 200px;
+}
+
+
+div#enter_contest select
+{
+    border: 1px solid #888888;
+    width: 100%;
+    display: block;
+}
+
+
+div#enter_contest select.filtered
+{
+    background-color: #EEEEEE;
+}
+
+
+div#enter_contest .filterbox
+{
+    margin-top: 4px;
+}
+
+
+div#enter_contest span.filterbox
+{
+    margin-right: 2px;
+}
+
+
+div#enter_contest input.filterbox
+{
+    border: 1px solid #888888;
+    background-color: #FFFFFF;
+    width: 13em;
+    background-image: url(/images/icon_textbox_search.gif);
+    background-position: left 1px;
+    background-repeat: no-repeat;
+    padding-left: 17px;
+    padding-right: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+
+div#enter_contest input.filterbox input.blurred
+{
+    color: #888888;
+}
+
+
+div#enter_contest form#enter_contest_form
+{
+    font-size: 14px;
+}
+
+
+div#enter_contest form#enter_contest_form ul.errorlist
+{
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+    padding: 0px;
+    margin-left: 0px;
+    color: #FF0000;
+}
+
+
+div#enter_contest form#enter_contest_form input.button
+{
+    margin-top: 20px;
+    border: 1px solid #B0B0B0;
+    background-color: #FAFAFA;
+    background-image: url(/images/bg_button.gif);
+    color: #000000;
+    padding: 1px 10px;
+    width: 80%;
+    text-decoration: none;
+    font-size: 0.9em;
+    text-align:center;
+    margin-right: auto;
+    margin-left: auto;
+    display: block;
+}
+
+
+div.contest_entries_list
+{
+    margin-bottom: 0;
+}
+
+
+div.contest_entries_list h1
+{
+    color: #993300;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+
+div.contest_entries_list table
+{
+    width: 100%;
+    background-color: #2CB618;
+    color: #007000;
+    font-family: Arial;
+    font-size: 12px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div.contest_entries_list table thead
+{
+    line-height: 2em;
+    color: #FFFFFF;
+    text-align: center;
+    font-weight: bold;
+}
+
+
+div.contest_entries_list table th
+{
+    color: #FFFFFF;
+}
+
+
+div.contest_entries_list table th a
+{
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+
+div.contest_entries_list table th a:hover
+{
+    text-decoration: underline;
+}
+
+
+div.contest_entries_list table tr.row1
+{
+    background-color: #C5ECAD;
+}
+
+
+div.contest_entries_list table tr.row2
+{
+    background-color: #B6DE9F;
+}
+
+
+div.contest_entries_list table td
+{
+    padding: 5px;
+    border-top: 1px solid #FFFFFF;
+}
+
+
+div.contest_entries_list table td a
+{
+    color: #007000;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+div.contest_entries_list table td a:hover
+{
+    text-decoration: underline;
+    color: #BC2A4D;
+}
+
+
+div.contest_entries_list table td.rank
+{
+    text-align: center;
+    width: 4em;
+}
+
+
+div.contest_entries_list table td.improvement
+{
+    text-align: center;
+    width: 4em;
+}
+
+
+div.contest_entries_list table td.heuristic
+{
+    text-align: center;
+    width: 12%;
+}
+
+
+div.contest_entries_list table td.experiment
+{
+    text-align: center;
+    width: 20%;
+}
+
+
+div.contest_entries_list table td.summary
+{
+}
+
+
+div.contest_entries_list table td.results
+{
+    text-align: center;
+    width: 13%;
+}
+
+
+div.contest_entries_list table td.date
+{
+    text-align: center;
+    width: 12em;
+}

@@ -1,0 +1,54 @@
+div.code
+{
+    border: 1px solid #AAAAAA;
+    margin: 0;
+    background-color: #F8F8F8;
+    overflow-x: auto;
+}
+
+
+div.code table
+{
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+
+div.code td.linenos
+{
+    background-color: #999999;
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: right;
+    width: 1em;
+}
+
+
+div.code td.code
+{
+    padding-left: 4px;
+    padding-right: 5px;
+}
+
+
+div.code pre
+{
+    line-height: 1.4em !important;
+    font-family: "Bitstream Vera Sans Mono",Monaco,"Courier New",Courier,monospace;
+    font-size: 11px;
+}
+
+
+div.code div.linenodiv a
+{
+    color: #000000;
+    text-decoration: none;
+}
+
+
+div.code div.linenodiv a:hover
+{
+    text-decoration: underline;
+}

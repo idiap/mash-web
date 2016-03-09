@@ -1,0 +1,110 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the 'heuristics details' page
+*
+*******************************************************************************/
+
+div.report_box
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #EFF0EF;
+    padding: 5px 10px 10px;
+    margin-bottom: 15px;
+    border: 0;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+div.report_box .red
+{
+    color: #993300;
+}
+
+
+div.report_box .blue
+{
+    color: #105289;
+}
+
+
+div.report_box .green
+{
+    color: #007000;
+}
+
+
+div.report_box p.name
+{
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 5px;
+    text-align: center;
+}
+
+
+div.report_box p a
+{
+    font-weight: bold;
+    text-decoration: none;
+}
+
+
+div.report_box p a:hover
+{
+    text-decoration: underline;
+}
+
+
+div.report_box div.section
+{
+    margin-top: 20px;
+}
+
+
+div.report_box div.section p.title
+{
+    font-size: 14px;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 10px;
+}
+
+
+div.report_box div.section a.frame_header
+{
+    text-decoration: none;
+    outline: 0 none;
+}
+
+
+div.report_box div.section pre.frame
+{
+    background-color: #000000;
+    color: #FFFFFF;
+    margin-bottom: 0px;
+    margin-top: 2px;
+    padding: 2px;
+}
+
+
+div.report_box div.section pre.code
+{
+    margin-top: 0px;
+    margin-bottom: 0px;
+    background-color: #DDDDDD;
+    padding: 2px;
+}
+
+
+div.report_box div.section pre.error
+{
+    background-color: #FF7777;
+    margin-bottom: 0px;
+    margin-top: 0px;
+    padding-left: 2px;
+    padding-right: 2px;
+}

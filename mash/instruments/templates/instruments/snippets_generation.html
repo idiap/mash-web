@@ -1,0 +1,103 @@
+<script src="/js/ajax.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+    // Declarations
+    var generating_snippets = new Array();
+
+    {% for snippet in snippets %}
+        {% ifnotequal snippet.status "AVA" %}
+            var snippet = new Object();
+            snippet.id = {{ snippet.id }};
+            snippet.container_id = "{{ snippet.container_id }}";
+            snippet.start_function = "{{ snippet.view.js_start_function }}";
+            snippet.xmlhttp = null;
+            generating_snippets.push(snippet);
+        {% endifnotequal %}
+    {% endfor %}
+
+
+    //------------------------------------------------------------------------------------------
+    // Called when a snippet was received
+    //------------------------------------------------------------------------------------------
+    function snippetUpdated()
+    {
+        for (index in generating_snippets)
+        {
+            snippet = generating_snippets[index];
+        
+            if ((snippet.xmlhttp != null) && (snippet.xmlhttp.readyState == 4))
+            {
+                if (snippet.xmlhttp.status != 200)
+                {
+                    var elContainer = document.getElementById(snippet.container_id);
+                    elContainer.innerHTML = '<p class="error">An error occurred during the generation of the snippet</p>';
+                    snippet.xmlhttp = null;
+                    return;
+                }
+                
+                // Retrieve the response
+                var content = snippet.xmlhttp.responseText;
+            
+                snippet.xmlhttp = null;
+
+                var elProgressContainer = document.getElementById(snippet.container_id + '_progress');
+                if (elProgressContainer != null)
+                    elProgressContainer.innerHTML = '';
+            
+                if (content == "ERROR")
+                {
+                    var elContainer = document.getElementById(snippet.container_id);
+                    elContainer.innerHTML = '<p class="error">An error occurred during the generation of the snippet</p>';
+                }
+                else if (content == "UNAVAILABLE")
+                {
+                    setTimeout("getSnippet(" + snippet.id + ")", 3000);
+                }
+                else
+                {
+                    var elContainer = document.getElementById(snippet.container_id);
+                    elContainer.innerHTML = content;
+
+                    var elScripts = elContainer.getElementsByTagName('script');
+                    if (elScripts.length == 1)
+                    {
+                        var offset_function = elScripts[0].innerHTML.indexOf(snippet.start_function);
+                        var offset_start = elScripts[0].innerHTML.indexOf('{', offset_function);
+                        var offset_end = elScripts[0].innerHTML.lastIndexOf('}');
+                        
+                        var command = 'if (typeof(' + snippet.start_function + ') != "undefined") ' + snippet.start_function + '(); else ' + elScripts[0].innerHTML.substring(offset_start, offset_end+1);
+                        
+                        eval(command);
+                    }
+                }
+            }
+        }
+    }
+
+
+    //------------------------------------------------------------------------------------------
+    // Asynchronously retrieve a snippet (the function 'snippetUpdated' is called when the
+    // snippet is received)
+    //------------------------------------------------------------------------------------------
+    function getSnippet(id)
+    {
+        for (index in generating_snippets)
+        {
+            if (generating_snippets[index].id != id)
+                continue;
+            
+            xmlhttp = GetXmlHttpObject();
+            if (xmlhttp == null)
+                return;
+
+            generating_snippets[index].xmlhttp = xmlhttp;
+    
+            xmlhttp.onreadystatechange = snippetUpdated;
+            xmlhttp.open("GET", "/instrumentation/snippet/" + id + "/", true);
+            xmlhttp.setRequestHeader('X_REQUESTED_WITH', 'XMLHttpRequest');
+            xmlhttp.send(null);
+        }
+    }
+
+</script>

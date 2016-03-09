@@ -1,0 +1,21 @@
+<div id="news-list-box">
+
+    {% if news_list %}
+
+        {% if previous_index or next_index %}
+            {% include "news/navigation_box.html" %}
+        {% endif %}
+
+        {% for news in news_list %}
+            {% include "news/news_box.html" %}
+        {% endfor %}
+    
+        {% if previous_index or next_index %}
+            {% include "news/navigation_box.html" %}
+        {% endif %}
+
+    {% else %}
+        <p>No news found.</p>
+    {% endif %}
+
+</div>

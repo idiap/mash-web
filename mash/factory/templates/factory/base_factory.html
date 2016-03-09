@@ -1,0 +1,1143 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+    {{ block.super }}
+
+    <link rel="stylesheet" type="text/css" href="/css/factory.css" />
+    <link rel="stylesheet" type="text/css" href="/css/jquery.alerts.css" />
+    <link rel="stylesheet" type="text/css" href="/css/ui-lightness/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" href="/css/jquery-impromptu.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super }}
+
+    <script src="/js/jquery.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/js/jquery.cookie.js" type="text/javascript" charset="utf-8"></script>
+
+    <script src="/js/jquery-ui.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/js/jquery.alerts.js" type="text/javascript" charset="utf-8"></script>
+
+    <script src="/js/ajax.js" type="text/javascript" charset="utf-8"></script>
+    
+    {% comment %}
+    <script src="/js/jquery-impromptu.4.0.min.js" type="text/javascript" charset="utf-8"></script>
+    {% endcomment %}
+    <script src="/js/jquery-impromptu.js" type="text/javascript" charset="utf-8"></script>
+
+    <script type="text/javascript">
+    {% if tutorial_mode %}
+    var factoryCodeEditoryLineCounterStart = 0;
+    {% endif %}
+
+        var tourStates = null;
+
+        var menu_status_timeout = null;
+        var menu_status_callback = null;
+        var retrieveSource = false;
+
+        $(window).load(function() {
+            {% if user.is_anonymous %}
+                // Display a warning to anonymous users having an account on the platform
+                if ($.cookie('robot_uid') == 'REGISTERED_USER')
+                    document.getElementById('checkRegisteredCookie').innerHTML = '<b><i><font color="red">You have a registered account, please do login in order to make sure your work is saved!</font></i></b>';
+            {% endif %}
+
+            menu_status_timeout = setTimeout("retrieve_menu_status()", 10000);
+        });
+
+
+        function process_menu_status(status)
+        {
+            retrieveSource = false;
+            if (menu_status_timeout != null)
+            {
+                clearTimeout(menu_status_timeout);
+                menu_status_timeout = null;
+            }
+
+            if (status.compilation > 0)
+            {
+                var img = $('#factory_infos_box #progress_editor');
+
+                if (status.compilation > 1)
+                    img[0].title = '' + status.compilation + " heuristics are still being compiled";
+                else
+                    img[0].title = "One heuristic is still being compiled";
+
+                img.show();
+            }
+            else
+            {
+                $('#factory_infos_box #progress_editor').hide();
+            }
+
+            if (status.experiments > 0)
+            {
+                var img = $('#factory_infos_box #progress_tasks');
+
+                if (status.experiments > 1)
+                    img[0].title = '' + status.experiments + " experiments are still being performed";
+                else
+                    img[0].title = "One experiment is still being performed";
+
+                img.show();
+            }
+            else
+            {
+                $('#factory_infos_box #progress_tasks').hide();
+            }
+
+            if (status.recorded_data === null)
+            {
+                $('#factory_infos_box #last_recorded_data_link').hide();
+                $('#factory_infos_box #progress_last_recorded_data').hide();
+            }
+            else
+            {
+                $('#factory_infos_box #last_recorded_data_link').show();
+
+                if (status.recorded_data != "done")
+                    $('#factory_infos_box #progress_last_recorded_data').show();
+                else
+                    $('#factory_infos_box #progress_last_recorded_data').hide();
+            }
+
+            if ((status.compilation > 0) || (status.experiments > 0) || (status.recorded_data == "running"))
+                menu_status_timeout = setTimeout("retrieve_menu_status()", 10000);
+
+            if (status.nb_compilation_errors > 0)
+                $('#factory_infos_box #user_nb_heuristics_errors').text("Compilation errors: " + status.nb_compilation_errors);
+            else
+                $('#factory_infos_box #user_nb_heuristics_errors').text("");
+
+            if (menu_status_callback !== null)
+                menu_status_callback(status)
+        }
+
+
+        function retrieve_menu_status()
+        {
+            menu_status_timeout = null;
+            $.post("/factory/menu_status/", {},
+                    function(data) {
+                        process_menu_status(JSON.parse(data));
+                    }
+                );
+        }
+
+    </script>
+    
+    <script type="text/javascript">
+    var startTutorialTour = function(e,v,m,f)
+    {
+          window.location = "/factory?tutorialMode=on";
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+
+    var startTutorialTasks = function(e,v,m,f)
+    {
+          window.location = "/factory/tasks?tutorialMode=on";
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var startTutorialDebugTour = function(e,v,m,f)
+    {
+          window.location = "/factory/?tutorialMode=on&debugMode=on";
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var startTutorialTasksDebug = function(e,v,m,f)
+    {
+          window.location = "/factory/tasks?tutorialMode=on&debugMode=on";
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var endTutorialDebugTour = function(e,v,m,f)
+    {
+          window.location = "/factory/?tutorialMode=on&finalMode=on";
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+
+
+    var startTutorial = function(e,v,m,f)
+    {
+          document.getElementById('myheuristiclist').options.length = 0;
+          var input = $("select#myheuristiclist")[0];
+          var option=document.createElement("option");
+          option.text="tutorial_dummy";
+          option.id="-2";
+          option.value=option.text;
+          try
+          {
+            input.add(option,null); // standards compliant
+            input.options.selectedIndex = option.index;
+          }
+          catch(ex)
+          {
+            input.add(option); // IE only
+            input.options.selectedIndex = option.index;
+          }
+
+          clean_editor("#factory-dim-editor", "// Max: 10\nreturn 1;");
+          clean_editor("#factory-computefeatures-editor", "features[0] = 1.0f;");
+          clean_editor("#factory-attributes-editor");
+          clean_editor("#factory-init-editor");
+          clean_editor("#factory-terminate-editor");
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var addRemoveHeuristicTutorial = function(e,v,m,f)
+    {
+          add_remove_heuristic_tutorial('myheuristiclist','button_add');
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var setHeuristicName = function(e,v,m,f)
+    {
+          var input = $("select#myheuristiclist")[0];
+          var option=document.createElement("option");
+          option.text="tutorial_center_red";
+          option.id="-2";
+          option.value=option.text;
+          try
+          {
+            input.add(option,null); // standards compliant
+            input.options.selectedIndex = option.index;
+          }
+          catch(ex)
+          {
+            input.add(option); // IE only
+            input.options.selectedIndex = option.index;
+          }
+         
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeDeclaration = function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;"
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+
+         for(var lineCounter = 0; lineCounter < $("#factory-computefeatures-editor .ace_gutter-cell").length; lineCounter++)
+         {
+              $("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].id = "computeFeaturesEditorLine_"+$("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].textContent;
+         }
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeDeclarationRGBLines= function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();"
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+          for(var lineCounter = 0; lineCounter < $("#factory-computefeatures-editor .ace_gutter-cell").length; lineCounter++)
+         {
+              $("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].id = "computeFeaturesEditorLine_"+$("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].textContent;
+         }
+
+         return tourSubmitFunc(e,v,m,f);
+
+    };
+    var tutorialCodeLoop= function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n\n   }\n} "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+          for(var lineCounter = 0; lineCounter < $("#factory-computefeatures-editor .ace_gutter-cell").length; lineCounter++)
+          {
+              $("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].id = "computeFeaturesEditorLine_"+$("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].textContent;
+          }
+        
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeLoopRedCheck= function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n\n       }\n   }\n} "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+          for(var lineCounter = 0; lineCounter < $("#factory-computefeatures-editor .ace_gutter-cell").length; lineCounter++)
+          {
+              $("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].id = "computeFeaturesEditorLine_"+$("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].textContent;
+          }
+        
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeLoopIncrementCounter= function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++\n       }\n   }\n} "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+          for(var lineCounter = 0; lineCounter < $("#factory-computefeatures-editor .ace_gutter-cell").length; lineCounter++)
+          {
+              $("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].id = "computeFeaturesEditorLine_"+$("#factory-computefeatures-editor .ace_gutter-cell")[lineCounter].textContent;
+          }
+
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeFeatureMistake= function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++\n       }\n   }\n}\n\nfeatures[0] = counter; "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+         
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeFeatureCorrect= function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++;\n       }\n   }\n}\n\nfeatures[0] = counter; "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+         
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialSubmitSaveMistake= function(e,v,m,f)
+    {
+          var saveMistakehtml = '<p id="heuristic_check_info" class="error">Your heuristic didn\'t passed the tests! Please fix the problem and upload a new source file.</p><div class="results"><p class="title">Results:</p><img src="/images/progress.gif" id="heuristic_check_progress_image" style="display: none;"><dl><dt>Status:</dt><dd id="phase_status_status" class="done">Started</dd><dd class="details hidden" id="phase_status_details"></dd></dl><dl><dt>Compilation:</dt><dd id="phase_compilation_status"class="error">FAILED</dd><dd class="details" id="phase_compilation_details"><pre>Failed to compile the heuristic \'user/tutorial_center_red\'\n\nuser/tutorial_center_red.cpp: In member function virtual void SimpleHeuristic::computeFeatures(unsigned int, Mash::Image**, Mash::scalar_t*):\nuser/tutorial_center_red.cpp:13: error: expected `;\' before } token</pre></dd></dl><dl><dt>Analyze:</dt><dd id="phase_analyze_status"> </dd><dd class="details hidden" id="phase_analyze_details"></dd></dl><dl><dt>Test:</dt><dd id="phase_test_status"> </dd><dd class="details hidden" id="phase_test_details"></dd></dl></div>';
+          document.getElementById('heuristic_check_results').innerHTML = saveMistakehtml;
+          document.getElementById('heuristic_check_results').style.display="block";
+
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialSubmitSaveOk= function(e,v,m,f)
+    {
+          enable_test_button();
+          document.getElementById("Test_Button").disabled = false;
+          var saveMistakehtml = '<p id="heuristic_check_info" class="done">Your heuristic passed all the tests!</p><div class="results"><p class="title">Results:</p><img src="/images/progress.gif" id="heuristic_check_progress_image" style="display: none;"><dl><dt>Status:</dt><dd id="phase_status_status" class="done">Started</dd><dd class="details hidden" id="phase_status_details"></dd></dl><dl><dt>Compilation:</dt><dd id="phase_compilation_status" class="done">OK</dd><dd class="details hidden" id="phase_compilation_details"></dd></dl><dl><dt>Analyze:</dt><dd id="phase_analyze_status" class="done">OK</dd><dd class="details hidden" id="phase_analyze_details"></dd></dl><dl><dt>Test:</dt><dd id="phase_test_status" class="done">OK</dd><dd class="details hidden" id="phase_test_details"></dd></dl></div>'
+          document.getElementById('heuristic_check_results').innerHTML = saveMistakehtml;
+          document.getElementById('heuristic_check_results').style.display="block";
+          enable_test_button();
+
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialTaskInprogress = function(e,v,m,f)
+    {
+          p_get_results = 1;
+          getTestResults();
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var tutorialTaskResultTask1 = function(e,v,m,f)
+    {
+          p_get_results = 2;
+          getTestResults();
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+
+    var tutorialTaskResults = function(e,v,m,f)
+    {
+          p_get_results = 3;
+          getTestResults();
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var tutorialTaskDetails = function(e,v,m,f)
+    {
+          selectTask(1);
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var startDebugInfo = function(e,v,m,f)
+    {
+          var input = $("select#myheuristiclist")[0];
+          var option=document.createElement("option");
+          option.text="tutorial_dummy";
+          option.id="-2";
+          option.value=option.text;
+          try
+          {
+            input.add(option,null); // standards compliant
+            input.options.selectedIndex = option.index;
+          }
+          catch(ex)
+          {
+            input.add(option); // IE only
+            input.options.selectedIndex = option.index;
+          }
+
+          clean_editor("#factory-dim-editor", "// Max: 10\nreturn 1;");
+          clean_editor("#factory-computefeatures-editor", "features[0] = 1.0f;");
+          clean_editor("#factory-attributes-editor");
+          clean_editor("#factory-init-editor");
+          clean_editor("#factory-terminate-editor");
+
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++;\n       }\n   }\n}\n\nfeatures[0] = counter; "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var tutorialCodeDebugText= function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++;\n       }\n   }\n}\n\nlogger << \"Counter is: \"<< counter<<std::endl;\n\nfeatures[0] = counter; "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+         
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeDebugTextImagesInit = function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nchar *redImage = new char[width * height * 3];\nmemset(redImage, 0, width * height * 3);\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++;\n       }\n   }\n}\n\nlogger << \"Counter is: \"<< counter<<std::endl;\n\nfeatures[0] = counter; "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+         
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeDebugTextImagesFilling = function(e,v,m,f)
+    {
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nchar *redImage = new char[width * height * 3];\nmemset(redImage, 0, width * height * 3);\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++;\n             redImage[(row * width + col) * 3 + 0] = lines[row][col].r;\n             redImage[(row * width + col) * 3 + 1] = lines[row][col].g;\n             redImage[(row * width + col) * 3 + 2] = lines[row][col].b;\n        }\n   }\n}\n\nlogger << \"Counter is: \"<< counter<<std::endl;\n\nfeatures[0] = counter; "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+         
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialCodeDebugTextImagesComplete = function(e,v,m,f)
+    {
+          var input = $("select#myheuristiclist")[0];
+          var option=document.createElement("option");
+          option.text="tutorial_center_red";
+          option.id="-1";
+          option.value=option.text;
+          try
+          {
+            input.add(option,null); // standards compliant
+            input.options.selectedIndex = option.index;
+          }
+          catch(ex)
+          {
+            input.add(option); // IE only
+            input.options.selectedIndex = option.index;
+          }
+
+          var data_computeFeature = "unsigned int width = images[0]->width();\nunsigned int height = images[0]->height();\n\nunsigned int center = width / 2;\nunsigned int counter = 0;\n\nRGBPixel_t **lines = images[0]->rgbLines();\n\nchar *redImage = new char[width * height * 3];\nmemset(redImage, 0, width * height * 3);\n\nfor(unsigned int row=0; row < height; row++){\n   for(unsigned int col=center - 20; col < center + 20; col++){\n       if ((lines[row][col].r > lines[row][col].g + 20)\n       &&  (lines[row][col].r > lines[row][col].b + 20)){\n             counter++;\n             redImage[(row * width + col) * 3 + 0] = lines[row][col].r;\n             redImage[(row * width + col) * 3 + 1] = lines[row][col].g;\n             redImage[(row * width + col) * 3 + 2] = lines[row][col].b;\n        }\n   }\n}\n\nlogger << \"Counter is: \"<< counter<<std::endl;\ndelete []redImage;\nfeatures[0] = counter; "
+          _update_editor_tutorial("#factory-computefeatures-editor", data_computeFeature);
+         
+          return tourSubmitFunc(e,v,m,f);
+    };
+    var tutorialSequenceDetails = function(e,v,m,f)
+    {
+          //p_get_record_data = -1;
+          max_frame = undefined;
+          getSequenceDetails(1,94);
+          $('#slider_table #sequence .container').show();
+          $('#slider_table').animate({ marginLeft: "-=864px", }, 1000,
+              function() { $('#slider_table #details .container').hide(); });
+
+          var input = $("select#heuristic_list")[0];
+          var option=document.createElement("option");
+          option.text="tutorial_center_red";
+          option.id="-2";
+          option.value=option.text;
+          try
+          {
+            input.add(option,null); // standards compliant
+            input.options.selectedIndex = option.index;
+          }
+          catch(ex)
+          {
+            input.add(option); // IE only
+            input.options.selectedIndex = option.index;
+          }
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var tutorialSequenceDetailsLogData = function(e,v,m,f)
+    {
+          p_get_record_data = 1;
+          record_data();
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+    var saveTutorialExample = function(e,v,m,f)
+    {
+          upload_heuristic('myheuristiclist');
+
+          return tourSubmitFunc(e,v,m,f);
+
+    };
+
+
+
+    var tourSubmitFunc = function(e,v,m,f){
+
+          if(v === -1){
+            $.prompt.prevState();
+            return false;
+          }
+          else if(v === 1){
+            $.prompt.nextState();
+            return false;
+          }
+    },
+    tourStatesStart = [
+
+      {
+        html: 'Welcome to <b>MASH Factory</b>, <br>lets take a "Tour"! <br> <i><span style="color:#008000">Note: you don\'t need to be logged to use the system</span></i>',
+        buttons: { Next: 1 },
+        focus: 1,
+        position: { container: '#tutorialButton', x: 10, y: 45, width: 200, arrow: 'tl' },
+        submit: startTutorialTour
+      },
+    ];
+    tourStates = [
+      {
+        html: '<h1>Welcome to this <i>Tutorial</i></h1><br>"MASH Factory" is a framework to build online algorithms and help a virtual robot navigate in various environment in order to resolve large number of tasks such as finding a red flag in a room for example.<br><br>We hope you will take the opportunity to join the project and contribute to machine learning algorithms',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_title_box', x: 280, y: 48, width: 400, arrow: '' },
+        submit: startTutorial
+      },
+      {
+        html: 'This menu will be available for you to:<ul><i><li>Edit your C++ code</li><li>View results produced by your code</li><li>Debug your code</li></i></ul>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 360, y: 10, width: 300, arrow: 'lt' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'This menu will help control your coding environment. Let\'s have a more insight into it',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_select_box', x: 600, y: 10, width: 300, arrow: 'lt' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'A drop down menu let\'s you select your current heuristic you wish to develop',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#myheuristiclist', x: -120, y: 30, width: 300, arrow: 'tc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Button to add a new heuristic and its corresponding name to the drop down menu',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#btn_submit_upload', x: -13, y: 20, width: 300, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Button to delete currently selected heuristic',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#btn_submit_upload', x: 5, y: 20, width: 300, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Check box to switch to an advanced programmer mode',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#checkboxExpertMode', x: -13, y: 20, width: 300, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'So let\'s start by adding a new heuristic. After clicking on "Next" a box will prompt. <br> Please type in : <span style="color:#008000"><i>tutorial_center_red</i></span> as heuristic name and click on "Accept"',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#btn_submit_upload', x: -13, y: -165, width: 300, arrow: 'bl' },
+        submit: addRemoveHeuristicTutorial
+      },
+      {
+        html: 'The new heuristic name will be displayed here, click on "Next" to see it',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#myheuristiclist', x: -120, y: 30, width: 300, arrow: 'tc' },
+        submit: setHeuristicName
+      },
+      {
+        html: 'Here it is!',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#myheuristiclist', x: -120, y: 30, width: 300, arrow: 'tc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Now let\'s move to the code edition boxes',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-dim-editor', x: 200, y: -50, width: 300, arrow: 'bc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Recall that we wish to implement some code to resolve specific tasks. An example of task can be : <br>Finding a <span style="color:#FF0000"> red flag</span> in the room.<br>Suppose we have the idea to check if there\'s effectively red pixels at the center of the image, as we could assume that a robot could use this information to distinguish between images with a red flag or not',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-dim-editor', x: 220, y: -80, width: 300, arrow: '' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'One information (or feature) that could be returned from this analysis is the number of red pixels in the center of the image',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-dim-editor', x: 200, y: -120, width: 300, arrow: 'bc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'the function <i>"unsigned int dim()"</i> lets us specify the number of features we wish to return. As we have only one information (i.e. the number of red pixels in the center of the image), let\'s <i>"return 1;"</i>. <br>Note that a maximum of 10 features can be returned', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-dim-editor', x: 200, y: -20, width: 300, arrow: 'lt' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'the function <i>"computeFeatures"</i> offers the possibility to implement the core algorithm of our system:', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 200, y: -20, width: 300, arrow: 'lt' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '3 parameters are passed to the function: <br><ul><li><i><span style="color:#008000">nb_images:</span></i> is the total number of images that have been seen in our trip in the room until now</li><li><i><span style="color:#008000">images:</span></i> contains the images seen until now <i>(image[0] is the current image)</i></li><li><i><span style="color:#008000">features:</span></i> gives the possibility to return our features in a vector <i>(as we have only one feature to return, we will fill in feature[0] only)</i></li></ul>', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 250, y: 20, width: 400, arrow: 'tc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'So we first need to have a few elements such as: <i><span style="color:#008000">width, height</span></i> of the latest image, we need to know where is the <i><span style="color:#008000">center of the image</span></i>, and let\'s declare a <i><span style="color:#008000">counter</span></i> that would help us count the number of <span style="color:#FF0000">red pixels</span>', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 250, y: 50, width: 300, arrow: '' },
+        submit: tutorialCodeDeclaration
+      },
+      {
+        html: 'Here we go!', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 400, y: 13, width: 200, arrow: '' },
+        submit: tutorialCodeDeclarationRGBLines,
+        onDone: function(){
+         for(var lineCounter = 0; lineCounter < $("#factory-computefeatures-editor .ace_gutter-cell").length; lineCounter++)
+         {
+              $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+         }
+        }
+      },
+      {
+        html: 'Now let\'s get the RGB pixels values for each lines', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 320, y: 43, width: 200, arrow: '' },
+        submit: tutorialCodeLoop,
+        onDone: function(){
+          var lineCounter = 6;
+          $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+        }
+
+      },
+      {
+        html: 'We can now loop through the pixels around the center of the image and...', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 480, y: 83, width: 300, arrow: '' },
+        submit: tutorialCodeLoopRedCheck,
+        onDone: function(){
+         for(var lineCounter = 8; lineCounter < $("#factory-computefeatures-editor .ace_gutter-cell").length; lineCounter++)
+         {
+              $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+         }
+        }
+      },
+      {
+        html: '...if the pixels are significantly red in color compared to it\'s green and blue component then...', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 400, y: 110, width: 300, arrow: '' },
+        submit: tutorialCodeLoopIncrementCounter,
+        onDone: function(){
+         for(var lineCounter = 10; lineCounter < 14; lineCounter++)
+         {
+              $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+         }
+        }
+
+      },
+      {
+        html: '...increment the red pixels counter value!', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 190, y: 143, width: 300, arrow: '' },
+        submit: tutorialCodeFeatureMistake,
+        onDone: function(){
+          var lineCounter = 12;
+          $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+        }
+      },
+      {
+        html: 'Now that we are done, we only need to save this <span style="color:#FF0000">red pixels counter</span> in our feature vector', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 200, y: 212, width: 300, arrow: '' },
+        submit: tourSubmitFunc,
+        onDone: function(){
+          var lineCounter = 17;
+          $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+        }
+      },
+      {
+        html: 'Now let\'s <i>"Save"</i> our heuristic, compile our code and be patient', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#Save_Button', x: -85, y: -120, width: 200, arrow: 'bc' },
+        submit: tutorialSubmitSaveMistake
+      },
+      {
+        html: 'Ouch! We forgot to add a semi-colon <span style="color:#FF0000"><i>";"</i></span> at line 13. Let\'s correct our mistake', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_check_results', x: 200, y: -115, width: 300, arrow: 'bc' },
+        submit: tutorialCodeFeatureCorrect
+      },
+      {
+        html: 'Here is the correction!', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 210, y: 143, width: 300, arrow: '' },
+        submit: tourSubmitFunc,
+        onDone: function(){
+          var lineCounter = 12;
+          $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+        }
+      },
+      {
+        html: 'Now let\'s <i>"Save"</i> our corrected heuristic again, compile our code and be patient', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#Save_Button', x: -85, y: -140, width: 200, arrow: 'bc' },
+        submit: tutorialSubmitSaveOk
+      },
+      {
+        html: 'Yes! This time we did it right', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_check_results', x: 200, y: -95, width: 300, arrow: 'bc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'We can now <i>"Test"</i> our compiled heuristics to check its results on the various tasks', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#Save_Button', x: -35, y: -140, width: 200, arrow: 'bc' },
+        submit: startTutorialTasks
+      },
+
+
+
+    ];
+    tourStatesTasks = [
+
+      {
+        html: 'We are now on the <br> <i><span style="color:#008000">Tasks&Results</span></i> page',
+        buttons: { Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 200, y: 45, width: 200, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'After pressing the <i>"Test"</i> button in the code editor, you can now see that your experience are <i><span style="color:#3333FF">Scheduled</span> for experiments</i>. Be patient, and after some time...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 190, y: 165, width: 300, arrow: 'tl' },
+        submit: tutorialTaskInprogress
+      },
+      {
+        html: '...your experiment will be <i><span style="color:#3333FF">In progress</span></i>...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 190, y: 165, width: 300, arrow: 'tl' },
+        submit: tutorialTaskResultTask1
+      },
+      {
+        html: '...and finally your results will appear...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 190, y: 165, width: 300, arrow: 'tl' },
+        submit: tutorialTaskResults
+      },
+
+      {
+        html: '...and after some time all your results will appear! <ul><li><span style="color:#008000">Tasks with good results (above 75%)</span></li><li><span style="color:#FF0000">Tasks with bad scores (below 75%)</span></li></ul>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 190, y: 183, width: 300, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'You may notice that you can even run single task experiments if you wish to check your results on a specific task',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 425, y: -133, width: 300, arrow: 'bl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'to have a detailed view of your results, just click on the task image',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 190, y: -10, width: 300, arrow: 'lm' },
+        submit: tutorialTaskDetails
+      },
+      {
+        html: 'This new view will appear with...',
+        buttons: { Next: 1 },
+        focus: 1,
+        position: { container: '#container', x: 5, y: 200, width: 300, arrow: '' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '...the score of our heuristics on each <i>"sequence"</i> of the task.<br> Question: <span style="color:#FF0000">So what is a <i>"sequence"</i>?</span>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#sequences', x: 200, y: -100, width: 300, arrow: 'bl' },
+        //position: { container: '#factory_task_selector', x: 425, y: -113, width: 300, arrow: 'bl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Answer:<br>Each task has many sequence in order to represent the variability and complexity of a task. Let\'s take an example: <br>if <i>Task 1</i> is to reach a <span style="color:#FF0000">red flag</span> in a room, <ul><li>the <span style="color:#FF0000">red flag</span> could be in the <span style="color:#008000">left corner</span> of a <span style="color:#3333FF">small square room</span> (sequence 1)</li><li>the <span style="color:#FF0000">red flag</span> could be in the <span style="color:#008000">right corner</span> of a <span style="color:#3333FF">big rectangle room</span> (sequence 2)</li><li>etc.</li></ul> To represent all these possibilities the idea of sequence is introduced for each task',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#sequences', x: 200, y: -100, width: 300, arrow: '' },
+        //position: { container: '#factory_task_selector', x: 425, y: -113, width: 300, arrow: 'bl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'So as you can see, the goal of your programming tasks is to optimize and get the best scores on each tasks with your various implemented heuristics!<br>While programming you may add some bugs...<br>We are aware of that so we offer you the possibility to debug your code online, let\'s see how this works',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#sequences', x: 50, y: -150, width: 300, arrow: 'lt' },
+        //position: { container: '#factory_task_selector', x: 425, y: -113, width: 300, arrow: 'bl' },
+        submit: startTutorialDebugTour
+      },
+
+    ];
+    tourStatesDebugCodeEditor = [
+
+      {
+        html: 'We are back to our "Code Editor" <br> let\'s add some debugging information to our code',
+        buttons: { Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 100, y: 45, width: 200, arrow: 'tl' },
+        submit: startDebugInfo
+      },
+      {
+        html: 'Let\'s begin by adding our debugging code...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 100, y: 45, width: 200, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '...Recall that our heuristic counts the number of red pixels in the center area of the image',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 450, y: 20, width: 200, arrow: 'lm' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'MASH Factory has a Logger Class that gives you the possibility to:<ul><li>print out text</li><li>display RGB images</li><li>display grayscale images</li></ul>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 450, y: 10, width: 300, arrow: '' },
+        submit: tutorialCodeDebugText
+      },
+      {
+        html: 'So let\'s print out the value of our red pixels counter',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 350, y: 210, width: 200, arrow: '' },
+        submit: tutorialCodeDebugTextImagesInit,
+        onDone: function(){
+         var lineCounter = 17; 
+         $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+        }
+
+      },
+      {
+        html: 'Let\'s create an image with only the red pixels of the flag at the center of the image.<br>Here we initialize a redImage and set all values to zero',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 350, y: 70, width: 300, arrow: '' },
+        submit: tutorialCodeDebugTextImagesFilling,
+        onDone: function(){
+         for(var lineCounter = 8; lineCounter < 10; lineCounter++)
+         {
+              $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+         }
+        }
+      },
+      {
+        html: 'We need to register the <i><span style="color:#FF0000">red</span> <span style="color:#008000">green</span> and <span style="color:#3333FF">blue</span></i> pixels values of our RGB image',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 490, y: 210, width: 300, arrow: '' },
+        submit: tutorialCodeDebugTextImagesComplete,
+        onDone: function(){
+         for(var lineCounter = 16; lineCounter < 19; lineCounter++)
+         {
+              $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+         }
+        }
+      },
+      {
+        html: '...and now of course we need to free the memory',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory-computefeatures-editor', x: 300, y: 320, width: 300, arrow: '' },
+        submit: tourSubmitFunc,
+        onDone: function(){
+         var lineCounter = 24; 
+         $("#factory-computefeatures-editor .ace_line")[lineCounter].style.backgroundColor = "#FFAD85";
+        }
+      },
+      {
+        html: 'Now let\'s <i>"Save"</i> our heuristic again with debugging information', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#Save_Button', x: -85, y: -140, width: 200, arrow: 'bc' },
+        submit: tutorialSubmitSaveOk
+      },
+      {
+        html: 'All is ok. We can already predict that the <i>"Test"</i> results didn\'t change as we have not modified the algorithm but only added debugging information', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_check_results', x: 300, y: -95, width: 300, arrow: 'bc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'So here we can now go check our online debugger', 
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#Save_Button', x: -35, y: -120, width: 200, arrow: 'bc' },
+        submit: startTutorialTasksDebug
+      },
+    ];
+    tourStatesDebugTasks = [
+      {
+        html: 'We are now back again to our: <br> <i><span style="color:#008000">Tasks&Results</span></i> page',
+        buttons: { Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 200, y: 45, width: 200, arrow: 'tl' },
+        submit: tutorialTaskResultTask1
+      },
+      {
+        html: 'When results have appeared for a <i>Task</i>, you can start debugging it',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 190, y: 165, width: 300, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Go back to the detailed view of your results by clicking on the task image',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_task_selector', x: 190, y: -10, width: 300, arrow: 'lm' },
+        submit: tutorialTaskDetails
+      },
+      {
+        html: 'As mentioned before this new view will appear with...',
+        buttons: { Next: 1 },
+        focus: 1,
+        position: { container: '#container', x: 5, y: 200, width: 300, arrow: '' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '...the score of your heuristics on each <i>"sequence"</i> of the task',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#sequences', x: 200, y: -100, width: 300, arrow: 'bl' },
+        //position: { container: '#factory_task_selector', x: 425, y: -113, width: 300, arrow: 'bl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'When you hover the mouse over a sequence, an information like this appears: <span style="color:#008000"><i>56/84</i></span><br> This means that:<ul><li>84 images are in the sequence</li><li>56 actions have been correctly computed by our heuristics</li></ul>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#sequences', x: 200, y: -76, width: 400, arrow: 'bl' },
+        //position: { container: '#factory_task_selector', x: 425, y: -113, width: 300, arrow: 'bl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'As your sequences are sorted from lowest to highest scores, you can easily debug a sequence by clicking on it',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#sequences', x: 200, y: -66, width: 400, arrow: 'bl' },
+        //position: { container: '#factory_task_selector', x: 425, y: -113, width: 300, arrow: 'bl' },
+        submit: tutorialSequenceDetails
+      },
+      {
+        html: 'Here we are on the detailed page of the sequence',
+        buttons: { Next: 1 },
+        focus: 1,
+        position: { container: '#slider', x: 600, y: 6, width: 400, arrow: 'lc' },
+        //position: { container: '#factory_task_selector', x: 425, y: -113, width: 300, arrow: 'bl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'As you may have noticed, you can choose the heuristic you wish to debug in this task sequence',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 250, y: 30, width: 400, arrow: 'tc' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Let\'s debug our code by clicking on <i>"Log data"</i>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 450, y: 30, width: 200, arrow: 'tc' },
+        submit: tutorialSequenceDetailsLogData
+      },
+      {
+        html: 'Debugging will be <i>"Running"</i> and...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#slider', x: 500, y: 90, width: 200, arrow: 'lm' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '...after some time Results will appear',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 400, y: 180, width: 200, arrow: 'lm' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '<i>Frame #number</i>" indicates the frame number in this sequence:<ul><li><span style="color:#008000">In green if correct action is performed by the heuristic</span></li><li><span style="color:#FF0000">in red if the expected action is wrong</span></li></ul>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 85, y: 100, width: 300, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Here is the frame of the sequence being analyzed',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 150, y: 150, width: 200, arrow: 'lm' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '<span style="color:#008000">The performed action is equal to the expected action</span>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 105, y: 100, width: 200, arrow: 'tl' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '<span style="color:#FF0000">The <i>Performed</i> action differs from the expected action on the left</span>',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 35, y: 157, width: 200, arrow: 'br' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'Here on the right our debugging information...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 450, y: 120, width: 200, arrow: 'lm' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: '...the output text which counts the number of red pixels...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 100, y: 108, width: 200, arrow: 'br' },
+        submit: tourSubmitFunc
+      },
+      {
+        html: 'and the RGB image which draws the red pixels in the center area! <br> and now...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#heuristic_selection_box', x: 310, y: 80, width: 200, arrow: 'lm' },
+        submit: endTutorialDebugTour
+      },
+    ];
+
+    tourStatesFinalCodeEditor = [
+      {
+        html: '...we are back to our code editor and...',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 100, y: 45, width: 200, arrow: 'tl' },
+        submit: tutorialCodeDebugTextImagesComplete
+      },
+      {
+        html: '...do you wish to save this tutorial_center_red example ? <br>After pressing on <i>"Next"</i>, please do give your choice',
+        buttons: { Prev: -1, Next: 1 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 100, y: 45, width: 200, arrow: 'tl' },
+        submit: saveTutorialExample
+      },
+
+      {
+        html: '<h1>End to this <i>Tutorial</i></h1><br>This concludes our tour. Please feel now free to program your heuristics on this MASH Factory which is just a subset of what this MASH website has to offer to you. Don\'t hesitate to register and thanks for stopping by!',
+        buttons: { Done: 2 },
+        focus: 1,
+        position: { container: '#factory_infos_box', x: 130, y: 145, width: 500, arrow: 'tl' },
+        submit: tourSubmitFunc
+      }
+
+    ];
+
+
+    </script>
+
+    <script type="text/javascript">
+    function tutorialClosefunc(e,v,m,f)
+    {
+        if(e.type == "promptclose")
+            window.location.href='/factory/';
+    }
+    </script>
+
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <div id='checkRegisteredCookie'></div>
+
+    <div id="factory_infos_title_box">
+        <h2>Factory - {{ factory_title }}</h2>
+        <button id="tutorialButton" onclick="$.prompt(tourStatesStart, { opacity: 0.3,callback: tutorialClosefunc });" title="tutorial">Watch Tutorial</button>
+    </div>
+
+    <div id="factory_infos_box">
+        <div class="factory_topbar">
+            <li class="">Section:</li>
+            <li class="margin-left2 bold">
+                <a href="/factory/">Code editor</a>
+                <img id="progress_editor" src="/images/progress.gif"
+                     {% if not menu_status.compilation %}
+                        style="display:none;"
+                     {% else %}
+                        {% ifnotequal menu_status.compilation 1 %}
+                            title="{{ menu_status.compilation }} heuristics are still being compiled"
+                        {% else %}
+                            title="One heuristic is still being compiled"
+                        {% endifnotequal %}
+                     {% endif %} />
+            </li>
+            <li class="margin-left bold">
+                <a href="/factory/tasks/">Tasks &amp; results</a>
+                <img id="progress_tasks" src="/images/progress.gif"
+                     {% if not menu_status.experiments %}
+                        style="display:none;"
+                     {% else %}
+                        {% ifnotequal menu_status.experiments 1 %}
+                            title="{{ menu_status.experiments }} experiments are still being performed"
+                        {% else %}
+                            title="One experiment is still being performed"
+                        {% endifnotequal %}
+                     {% endif %} />
+            </li>
+            <li id="last_recorded_data_link" class="margin-left bold" {% if not menu_status.recorded_data %}style="display: none"{% endif %}>
+                <a href="/factory/last_recorded_data/">Last data logged</a>
+                <img id="progress_last_recorded_data" src="/images/progress.gif" title="The data is still being logged" {% ifnotequal menu_status.recorded_data "running" %}style="display:none;"{% endifnotequal %} />
+            </li>
+            {% if request.user.get_profile.is_group_leader %}<li id="leaded_groups" class="margin-left bold"><a href="/factory/groups/">My groups</a></li>{% endif %}
+            <li id="user_nb_heuristics_errors" class="right bold red">{% if menu_status.nb_compilation_errors > 0 %}Compilation errors: {{ menu_status.nb_compilation_errors }}{% endif %}</li>
+        </div>
+    </div>
+{% endblock content %}

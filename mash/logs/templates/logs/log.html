@@ -1,0 +1,7 @@
+{% extends "logs/base_log.html" %}
+
+{% block title %}{{ block.super }} - Log file {{ filename }}{% endblock %}
+
+{% block content %}
+    <pre class="log">{{ content }}</pre>
+{% endblock content %}

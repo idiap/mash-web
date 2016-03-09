@@ -1,0 +1,9 @@
+<p class="news-navigation">
+    {% if previous_index %}
+        <a class="news-link" href="?first={{ previous_index|add:"-1" }}"><< Previous</a>
+    {% endif %}
+
+    {% if next_index %}
+        <a class="news-link {% if previous_index %}news-lmargin{% endif %}" href="?first={{ next_index|add:"-1" }}"> Next >></a>
+    {% endif %}
+</p>

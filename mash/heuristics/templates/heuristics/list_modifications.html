@@ -1,0 +1,49 @@
+{% load heuristic_tags %}
+{% load assign %}
+
+{% for heuristic in heuristics %}
+    
+    {% latest_heuristic_version heuristic request.user as latest_version %}
+
+    {% assign rowclass "" %}
+    {% assign title1 "" %}
+    {% assign title2 "" %}
+    {% assign title3 "" %}
+
+    {% if latest_version.test_status.error %}
+        {% assign rowclass "error" %}
+        {% assign title1 "The heuristic '" %}
+        {% assign title2 latest_version.fullname %}
+        {% assign title3 "' didn't pass the tests" %}
+    {% else %}
+        {% ifequal latest_version.status 'DIS' %}
+            {% assign rowclass "error" %}
+            {% assign title1 "The heuristic '" %}
+            {% assign title2 latest_version.fullname %}
+            {% assign title3 "' has been disabled, due to an error" %}
+        {% endifequal %}
+    {% endif %}
+
+
+    <tr class="{% cycle 'row1' 'row2' %} {{ rowclass }}" title="{{ title1 }}{{ title2 }}{{ title3 }}">
+        <td class="username"><a href="/accounts/profile/{{ heuristic.author.id }}">{{ heuristic.author.username }}</a></td>
+
+        <td class="name">
+            <a href="/heuristics/{{ heuristic.id }}">{{ heuristic.name }}</a>
+
+            {% if mode.can_diff %}
+                <a class="select" href="/heuristics/diff/?vn={{ latest_version.id }}&o={{ configuration.heuristic.id }}">[diff]</a>
+            {% endif %}
+        </td>
+
+        <td class="rank">{% if latest_version.rank %}{{ latest_version.rank }}{% else %}-{% endif %}</td>
+        
+        {% if mode.can_display_accessibility %}
+            <td class="accessibility">{% if latest_version.public %}Public{% else %}Private{% endif %}</td>
+        {% endif %}
+
+        <td class="description">{% if heuristic.short_description %}{{ heuristic.short_description }}{% else %}&nbsp;{% endif %}</td>
+
+        <td class="date">{{ latest_version.upload_date|date:"N j, Y, P" }}</td>
+    </tr>
+{% endfor %}

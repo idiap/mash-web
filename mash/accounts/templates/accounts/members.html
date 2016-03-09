@@ -1,0 +1,220 @@
+﻿{% extends "accounts/base_accounts.html" %}
+
+{% block title %}{{ block.super }} - Members{% endblock %}
+
+
+{% block scripts %}
+
+    {% if nb_pages %}
+        <script type="text/javascript">
+            
+            function jumpto()
+            {
+                var page = prompt('Enter the page number you wish to go to:', {{ current_page }});
+        
+                if (page !== null && !isNaN(page) && page > 0)
+                {
+                    document.location.href = '{{ page_url|safe }}&s=' + ((page - 1) * {{ nb_users_per_page }});
+                }
+            }
+            
+        </script>
+    {% endif %}
+
+    {% if search_popup %}
+        <script type="text/javascript">
+
+            {% if search_single %}
+            
+                function insert_single(user)
+                {
+                    opener.document.forms['{{ search_form }}'].{{ search_field }}.value = user;
+                    self.close();
+                }
+            
+            {% else %}
+
+                function insert_user(user)
+                {
+                    opener.document.forms['{{ search_form }}'].{{ search_field }}.value = ( opener.document.forms['{{ search_form }}'].{{ search_field }}.value.length && opener.document.forms['{{ search_form }}'].{{ search_field }}.type == "textarea" ) ? opener.document.forms['{{ search_form }}'].{{ search_field }}.value + "\n" + user : user;
+                }
+                
+                function insert_marked(users)
+                {
+                    if (typeof(users.length) == "undefined")
+                    {
+                        if (users.checked)
+                        {
+                            insert_user(users.value);
+                        }
+                    }
+                    else if (users.length > 0)
+                    {
+                        for (i = 0; i < users.length; i++)
+                        {
+                            if (users[i].checked)
+                            {
+                                insert_user(users[i].value);
+                            }
+                        }
+                    }
+                
+                    self.close();
+                }
+
+                /**
+                * Mark/unmark checklist
+                * id = ID of parent container, name = name prefix, state = state [true/false]
+                */
+                function marklist(id, name, state)
+                {
+                    var parent = document.getElementById(id);
+                    if (!parent)
+                    {
+                        eval('parent = document.' + id);
+                    }
+                
+                    if (!parent)
+                    {
+                        return;
+                    }
+                
+                    var rb = parent.getElementsByTagName('input');
+                
+                    for (var r = 0; r < rb.length; r++)
+                    {
+                        if (rb[r].name.substr(0, name.length) == name)
+                        {
+                            rb[r].checked = state;
+                        }
+                    }
+                }
+
+            {% endif %}
+            
+        </script>
+    {% endif %}
+
+{% endblock scripts %}
+
+
+{% block content %}
+
+    <div class="members_topbar">
+        <ul class="row1">
+            <li id="members_banner">{% if group_name %}{{ group_name }}{% else %}Members{% endif %}</li>
+
+            <li class="right">
+                <form id="search" method="post" action="{{ page_url_without_query }}">
+                    <fieldset>
+                        <input class="searchbox {% if not query %}blurred {% endif %}" type="text" onblur="if (this.value == '') { this.value = 'Search…'; this.className = 'searchbox blurred'; }" onclick="if (this.value == 'Search…') { this.value = ''; this.className = 'searchbox'; }" value="{% if query %}{{ query }}{% else %}Search…{% endif %}" title="Search for keywords" maxlength="128" name="query"/>
+                        <input class="button" type="submit" value="Search"/>
+                    </fieldset>
+                </form>
+            </li>
+        </ul>
+
+        <ul>
+            <li class="bold"><a href="{{ page_url_without_initial }}">All</a></li>
+
+            {% for letter in letters %}
+                <li class="bold"><a href="{{ page_url_without_initial }}&i={{ letter|lower }}">{{ letter }}</a></li>
+            {% endfor %}
+
+            <li class="bold"><a href="{{ page_url_without_initial }}&i=_">#</a></li>
+
+
+            <li class="right">{{ nb_users }} users{% if nb_pages %} • <a title="Click to jump to page…" onclick="jumpto(); return false;" href="#">Page {{ current_page }} of {{ nb_pages }}</a> • {{ pages_navigation|safe }}{% endif %}</li>
+        </ul>
+    </div>
+
+    {% if search_popup and not search_single %}
+        <form id="results" onsubmit="insert_marked(this.user); return false" action="" method="post">
+    {% endif %}
+
+    {% if user_profiles %}
+        <div id="members_list">
+            <table cellspacing="1">
+                {{ table_header|safe }}
+                <tbody>
+                    {% for profile in user_profiles %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            {% if search_popup and not search_single %}
+                                <td class="select">
+                                    <input type="checkbox" value="{{ profile.user.username }}" name="user"/>
+                                </td>
+                            {% endif %}
+
+                            {% if search_popup and not search_single %}
+                                <td class="username leftalign">
+                            {% else %}
+                                <td class="username">
+                            {% endif %}
+                                    <a href="/accounts/profile/{{ profile.user.id }}">{{ profile.user.username }}</a>
+                            
+                                    {% if search_popup and search_single %}
+                                        <br/><a class="select" onclick="insert_single('{{ profile.user.username }}'); return false;" href="#">[Select]</a>
+                                    {% endif %}
+                                </td>
+
+                            {% if request.user.get_profile.project_member %}
+                                <td class="email">{{ profile.user.email }}</td>
+                            {% endif %}
+    
+                            <td class="rank">
+                                {% if profile.forum_user and profile.forum_user.user_rank and profile.forum_user.user_rank.rank_title %}
+                                    {{ profile.forum_user.user_rank.rank_title }}
+                                {% else %}
+                                    Contributor
+                                {% endif %}
+                            </td>
+                            
+                            <td class="heuristics">{{ profile.heuristics_count }}</td>
+                            
+                            {% if profile.forum_user %}
+                                <td class="posts">{{ profile.posts_count }}</td>
+                                
+                                {% if profile.forum_user.user_website or profile.forum_user.user_from %}
+                                    <td class="website">
+                                        {% if profile.forum_user.user_website %}
+                                            <a href="{{ profile.forum_user.user_website }}">{{ profile.forum_user.user_website }}</a>
+                                        
+                                            {% if profile.forum_user.user_from %}<br />{% endif %}
+                                        {% endif %}
+                                        {% if profile.forum_user.user_from %}{{ profile.forum_user.user_from }}{% endif %}
+                                    </td>
+                                {% else %}
+                                    <td class="website">&nbsp;</td>
+                                {% endif %}
+                            {% else %}
+                                <td class="posts">0</td>
+                                <td class="website">&nbsp;</td>
+                            {% endif %}
+                            
+                            <td class="joindate">{{ profile.user.date_joined|date:"N j, Y, P" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if search_popup and not search_single %}
+            <fieldset class="search_actions">
+                <input class="button" type="submit" value="Select marked" name="submit"/>
+                <div>
+                    <a onclick="marklist('results', 'user', true); return false;" href="#">Mark all</a>
+                    •
+                    <a onclick="marklist('results', 'user', false); return false;" href="#">Unmark all</a>
+                </div>
+            </fieldset>
+        {% endif %}
+	
+	{% else %}
+	    <p class="members_text">No user found</p>
+    {% endif %}
+
+    {% if search_popup and not search_single %}
+        </form>
+    {% endif %}
+
+{% endblock content %}

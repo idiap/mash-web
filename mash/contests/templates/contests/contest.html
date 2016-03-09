@@ -1,0 +1,292 @@
+{% extends "contests/base_contests.html" %}
+
+{% block title %}{{ block.super }} - Contest {{ contest.name }}{% endblock %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/contests_details.css" />
+    <link rel="stylesheet" href="/css/details_box.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="/js/jquery.js" type="text/javascript"></script>
+    <script src="/js/jquery-ui.js" type="text/javascript"></script>
+    <script src="/js/jquery.alerts.js" type="text/javascript"></script>
+
+    {% if usable_heuristic_versions %}
+        <script type="text/javascript">
+
+            // Type declarations
+            function Heuristic(id, name)
+            {
+                this.id   = id;
+                this.name = name;
+            }
+
+            // Declarations
+            var selected_heuristics = new Array();
+            var current_filter = '';
+            var all_heuristic_versions = new Array();
+            
+            // Initialisations
+            {% for heuristic_version in usable_heuristic_versions %}all_heuristic_versions.push(new Heuristic({{ heuristic_version.id }}, '{{ heuristic_version.shortname }}'));
+            {% endfor %}
+            
+
+            function selectedHeuristicsChanged()
+            {
+                var heuristics_list = document.getElementById('id_heuristics_list');
+
+                selected_heuristics = new Array();
+                for (var i = 0; i < heuristics_list.options.length; ++i)
+                {
+                    if (heuristics_list.options[i].selected)
+                        selected_heuristics.push(heuristics_list.options[i].value);
+                }
+
+                document.forms['enter_contest_form'].id_heuristic_versions.value = selected_heuristics.join(' ');
+
+                document.getElementById('id_heuristics_infos').textContent = 'Selected: ' + selected_heuristics.length + '/' + heuristics_list.options.length;
+            }
+
+
+            function filter(name)
+            {
+                if (current_filter == '')
+                    return true;
+
+                if (!name.match(current_filter))
+                    return false;
+
+                return true;
+            }
+
+
+            function heuristicsFilterChanged()
+            {
+                var heuristics_filter = document.getElementById('id_heuristics_filter');
+
+                current_filter = heuristics_filter.value;
+
+                var heuristics_list = document.getElementById('id_heuristics_list');
+                
+                if (current_filter == '')
+                    heuristics_list.className = '';
+                else
+                    heuristics_list.className = 'filtered';
+
+                while (heuristics_list.length > 0)
+                    heuristics_list.remove(0);
+
+                for (var i = 0; i < all_heuristic_versions.length; ++i)
+                {
+                    if (filter(all_heuristic_versions[i].name))
+                    {
+                        heuristics_list.options[heuristics_list.options.length] = new Option(all_heuristic_versions[i].name, all_heuristic_versions[i].id);
+                        if (selected_heuristics.indexOf(all_heuristic_versions[i].id.toString()) >= 0)
+                            heuristics_list.options[heuristics_list.options.length - 1].selected = true;
+                    }
+                }
+                
+                selectedHeuristicsChanged();
+            }
+        
+        </script>
+
+    {% endif %}
+
+{% endblock scripts %}
+
+
+
+{% block content %}
+
+    <div class="infos_box">
+        <div class="tools">
+            <p class="name">{{ contest.name }}</p>
+            
+            {% if not request.user.is_anonymous %}
+	            {% if contest.post %}
+	                <span class="tool"><a class="forum" title="Talk about this contest on the forum" href="/contests/topic/{{ contest.id }}/"></a></span>
+	            {% else %}
+	                <span class="tool"><a class="forum_no_comment" title="Talk about this contest on the forum (no comment yet)" href="/contests/topic/{{ contest.id }}/"></a></span>
+	            {% endif %}
+            {% endif %}
+        </div>
+
+        {% if description %}
+            <div class="description">{{ description|safe }}</div>
+            <a id="infos_control" href="#">Show details >></a>
+        {% endif %}
+
+        <div id="full_description" {% if description %}style="display: none;"{% endif %}>
+            <div class="section">
+                <p class="title">Infos</p>
+                <dl>
+                    <dt>Task:</dt>
+                    <dd>{{ contest.configuration.task.type_name }}</dd>
+
+                    <dt>Status:</dt>
+                    {% if contest.isInFuture %}
+                        <dd><span class="future">Not started yet</span></dd>
+                    {% else %}
+                        {% if contest.isInProgress %}
+                            <dd><span class="in_progress">In progress</span></dd>
+                        {% else %}
+                            <dd><span class="done">Done</span></dd>
+                        {% endif %}
+                    {% endif %}
+
+                    <dt>Start date:</dt>
+                    <dd>{{ contest.start|date:"N j, Y, P" }}</dd>
+                
+                    <dt>End date:</dt>
+                    <dd class="bottomspace">{% if contest.end %}{{ contest.end|date:"N j, Y, P" }}{% else %}-{% endif %}</dd>
+
+                    <dt>Summary:</dt>
+                    <dd class="bottomspace justified">{{ contest.summary }}</dd>
+                </dl>
+            </div>
+
+            {% if database_box_content %}
+                <div class="section">
+                    <p class="title">Database</p>
+                    {{ database_box_content|safe }}
+                </div>
+            {% endif %}
+
+            {% if goalplanning_task_box_content %}
+                <div class="section">
+                    <p class="title">Task</p>
+                    {{ goalplanning_task_box_content|safe }}
+                </div>
+            {% endif %}
+
+            {% if predictor_box_content %}
+                <div class="section">
+                    <p class="title">{% ifequal contest.configuration.task.type "gp" %}Goal-planner{% else %}Classifier{% endifequal %}</p>
+                    {{ predictor_box_content|safe }}
+                </div>
+            {% endif %}
+
+            {% if heuristics_box_content %}
+                <div class="section">
+                    <p class="title">Heuristics used by the model</p>
+                    {{ heuristics_box_content|safe }}
+                </div>
+            {% endif %}
+
+            {% if results_box_content %}
+                <div class="section">
+                    {% if goalplanning_task_box_content %}
+                        <p class="title">Error rates using the model</p>
+                    {% else %}
+                        <p class="title">Results using the model</p>
+                    {% endif %}
+                    {{ results_box_content|safe }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+
+{% if form %}
+    <div id="enter_contest" class="details_box collapsed">
+        <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">+</td><td>Enter this contest</td></tr></tbody></table></div></a>
+        <div class="content green" style="display: none;">
+            <table class="heuristics_list">
+                <tbody>
+                    <tr>
+                        <td class="explanation">
+                            {% if not usable_heuristic_versions %}<p class="no_heuristic">All your public heuristics are already competing in this contest.</p>{%endif %}
+                            {% if nb_private_heuristics %}<p class="nb_private_heuristics">You still have {{ nb_private_heuristics }} private heuristics. Publish them and enter this contest!</p>{%endif %}
+                            <p>Select the heuristic(s) that will enter this contest.</p>
+                            <p>Rules:</p>
+                            <ul>
+                                <li>Only the <span>latest public version</span> of a heuristic can enter the contest.</li>
+                                <li>Each one will compete alone against all the other participants.</li>
+                                <li>New public versions of a participating heuristic will automatically enter the contest.</li>
+                            </ul>
+                        </td>
+                        <td class="heuristics_list">
+                            <span id="id_heuristics_infos">Selected: 0/0</span>
+                            <select id="id_heuristics_list" multiple="yes" size="10">
+                                {% for version in usable_heuristic_versions %}
+                                    <option value="{{ version.id }}">{{ version.shortname }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class"filterbox">Filter:</span>
+                            <input id="id_heuristics_filter" name="heuristics_filter" class="filterbox blurred" type="text" onblur="if (this.value == '') { this.value = 'Filter…'; this.className = 'filterbox blurred'; }" onclick="if (this.value == 'Filter…') { this.value = ''; this.className = 'filterbox'; }" value="Filter…" title="Filter for heuristics" maxlength="128"/>
+
+                            <form id="enter_contest_form" method="post" action="/contests/{{ contest.id }}/" enctype="multipart/form-data">
+                                {{ form.errors.heuristic_versions }}
+                                {{ form.heuristic_versions }}
+                                <input name="submit" class="button" type="submit" value="Enter the contest" />
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+
+    {% if contributors_entries_html %}{{ contributors_entries_html|safe }}{% endif %}
+    {% if consortium_entries_html %}{{ consortium_entries_html|safe }}{% endif %}
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+        	$('.details_box .details_header').click(function() {
+        		var iconElement = $(this).find('.details_icon');
+        		var details_box = $(this).closest('.details_box');
+
+        		var text = iconElement.text();
+        		if (text == '+')
+        		{
+        		    iconElement.text('-');
+        		    details_box.removeClass('collapsed');
+        		}
+        		else
+        		{
+        		    iconElement.text('+');
+        		    details_box.addClass('collapsed');
+        		}
+
+        		$(this).next().slideToggle('fast');
+
+        		return false;
+        	});
+
+{% if description %}
+        	$('#infos_control').click(function() {
+
+        		var text = $(this).text();
+        		if (text == 'Show details >>')
+        		    $(this).text('<< Hide details');
+        		else
+        		    $(this).text('Show details >>');
+
+        		$('#full_description').slideToggle('fast');
+
+        		return false;
+        	});
+{% endif %}
+
+{% if usable_heuristic_versions %}
+            var heuristics_list = document.getElementById('id_heuristics_list');
+            heuristics_list.onchange = selectedHeuristicsChanged;
+
+            var heuristics_filter = document.getElementById('id_heuristics_filter');
+            heuristics_filter.onkeyup = heuristicsFilterChanged;
+
+            selectedHeuristicsChanged();
+{% endif %}
+    	});
+    </script>
+
+{% endblock content %}

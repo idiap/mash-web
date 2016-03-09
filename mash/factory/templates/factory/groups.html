@@ -1,0 +1,102 @@
+{% extends "factory/base_factory.html" %}
+{% load assign %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+
+    <link rel="stylesheet" href="/css/details_box.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super }}
+{% endblock scripts %}
+
+
+{% block content %}
+
+    {% assign factory_title "My groups" %}
+    {{ block.super }}
+
+    {% for group in groups %}
+        <div class="details_box">
+            <a href="#" class="details_header blue"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>{{ group.name }}</td></tr></tbody></table></div></a>
+            <div class="content blue">
+                {% for task in group.tasks %}
+                    <div class="task_entry collapsed">
+                        <a href="#" class="task_entry_header"><div class="task_entry_title"><table><tbody><tr><td class="task_entry_icon">+</td><td class="task_entry_number">Task {{ task.task.taskNumber }}</td><td class="task_entry_description">{{ task.task.description }}</td><td class="task_entry_score{% if task.global_score > 75.0 %} success{% endif %}">{{ task.global_score|floatformat:2 }}%</td></tr></tbody></table></div></a>
+                        <div class="task_entry_content" style="display: none;">
+                            <table>
+                                <tbody>
+                                    {% for user in task.users %}
+                                        <tr>
+                                            <td class="user_entry_name">{{ user.name }}</td>
+                                            {% if user.nb_heuristics > 0 %}
+                                                <td class="user_entry_heuristics">{{ user.nb_heuristics }} heuristic{% if user.nb_heuristics > 1 %}s{% endif %}</td>
+                                                <td class="user_entry_score{% if user.score > 75.0 %} success{% endif %}">{{ user.score|floatformat:2 }}%</td>
+                                            {% else %}
+                                                <td class="user_entry_heuristics">no heuristic</td>
+                                                <td class="user_entry_score">-</td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+            $('.details_box .details_header').click(function() {
+                var iconElement = $(this).find('.details_icon');
+                var details_box = $(this).closest('.details_box');
+
+                var text = iconElement.text();
+                if (text == '+')
+                {
+                    iconElement.text('-');
+                    details_box.removeClass('collapsed');
+                }
+                else
+                {
+                    iconElement.text('+');
+                    details_box.addClass('collapsed');
+                }
+
+                $(this).next().slideToggle('fast');
+
+                return false;
+            });
+
+            $('.task_entry .task_entry_header').click(function() {
+                var iconElement = $(this).find('.task_entry_icon');
+                var task_entry_box = $(this).closest('.task_entry_box');
+
+                var text = iconElement.text();
+                if (text == '+')
+                {
+                    iconElement.text('-');
+                    task_entry_box.removeClass('collapsed');
+                }
+                else
+                {
+                    iconElement.text('+');
+                    task_entry_box.addClass('collapsed');
+                }
+
+                $(this).next().slideToggle('fast');
+
+                return false;
+            });
+        });
+
+    </script>
+
+{% endblock content %}

@@ -1,0 +1,149 @@
+﻿{% extends "experiments/base_experiments.html" %}
+
+{% block title %}{{ block.super }} - {{ title|safe }}{% endblock %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/experiments_list.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+
+    {% if nb_pages %}
+        <script type="text/javascript">
+            
+            function jumpto()
+            {
+                var page = prompt('Enter the page number you wish to go to:', {{ current_page }});
+        
+                if (page !== null && !isNaN(page) && page > 0)
+                {
+                    document.location.href = '{{ configuration.navigationUrl|safe }}&s=' + ((page - 1) * {{ nb_experiments_per_page }});
+                }
+            }
+            
+        </script>
+    {% endif %}
+
+{% endblock scripts %}
+
+
+{% block content %}
+
+    <div class="experiments_topbar">
+        <ul style="">
+            <li id="experiments_banner">{{ title|safe }}</li>
+            {% if request.user.is_authenticated %}
+                <li class="right rightmost bold"><a class="schedule" href="/experiments/schedule/private/">Schedule a new private experiment</a></li>
+                {% if request.user.get_profile.project_member %}
+                    <li class="right bold"><a class="schedule" href="/experiments/schedule/consortium/">Schedule a new consortium experiment</a></li>
+                {% endif %}
+                {% if request.user.is_superuser %}
+                    <li class="right bold"><a class="schedule" href="/experiments/schedule/contest/">Schedule a new contest experiment</a></li>
+                {% endif %}
+            {% endif %}
+        </ul>
+    </div>
+
+
+    <div class="experiments_topbar">
+        
+        <ul class="row1">
+            <li class="">Display:</li>
+            <li class="margin-left2 bold"><a href="/experiments/">The public experiments</a></li>
+
+            {% if request.user.is_authenticated %}
+                {% if request.user.get_profile.project_member %}
+                    <li class="margin-left bold"><a href="/experiments/consortium/">The consortium experiments</a></li>
+                {% endif %}
+                {% if request.user.is_superuser %}
+                    <li class="margin-left bold"><a href="/experiments/contest/">The contest experiments</a></li>
+                {% endif %}
+                <li class="margin-left bold"><a href="/experiments/private/">My private experiments</a></li>
+            {% endif %}
+
+            <li class="right rightmost">
+                <form id="search" method="post" action="{{ configuration.queryUrl }}">
+                    <fieldset>
+                        <input class="searchbox {% if not configuration.query %}blurred {% endif %}" type="text" onblur="if (this.value == '') { this.value = 'Search…'; this.className = 'searchbox blurred'; }" onclick="if (this.value == 'Search…') { this.value = ''; this.className = 'searchbox'; }" value="{% if configuration.query %}{{ configuration.query }}{% else %}Search…{% endif %}" title="Search for keywords" maxlength="128" name="query"/>
+                        <input class="button" type="submit" value="Search"/>
+                    </fieldset>
+                </form>
+            </li>
+        </ul>
+
+        <ul>
+            <li class="bold"><a href="{{ configuration.initialsUrl }}">All</a></li>
+
+            {% for letter in letters %}
+                <li class="bold"><a href="{{ configuration.initialsUrl }}&i={{ letter|lower }}">{{ letter }}</a></li>
+            {% endfor %}
+
+            <li class="right rightmost">
+                {% if nb_experiments %}
+                    {{ nb_experiments }} experiment{% ifnotequal nb_experiments 1 %}s{% endifnotequal %}
+                {% else %}
+                    0 experiment
+                {% endif %}
+                {% if multiple_pages %} • <a title="Click to jump to page…" onclick="jumpto(); return false;" href="#">Page {{ current_page }} of {{ nb_pages }}</a> • {{ pages_navigation|safe }}{% endif %}
+            </li>
+        </ul>
+    </div>
+
+
+    {% if experiments %}
+        <div id="experiments_list" class="experiments-list">
+            <table>
+                <thead>
+                    {{ table_header|safe }}
+                </thead>
+                <tbody>
+                    {% for experiment in experiments  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            {% if display_username %}
+                                <td class="username"><a href="/accounts/profile/{{ experiment.user.id }}/">{{ experiment.user.username|lower }}</a></td>
+                            {% endif %}
+                            <td class="name"><a href="/experiments/{{ experiment.id }}/">{{ experiment.name }}</a></td>
+                            <td class="task">{{ experiment.configuration.task.name }}</td>
+                            {% ifequal experiment.configuration.task.type 'gp' %}
+                                <td class="details" title="Goal / Environment">{{ experiment.configuration.goalName }} / {{ experiment.configuration.environmentName }}</td>
+                            {% else %}
+                                <td class="details" title="The database used">{{ experiment.configuration.databaseName }} ({{ experiment.configuration.labelsCountText }})</td>
+                            {% endifequal %}
+                            <td class="predictor">{{ experiment.predictor }}</td>
+                            <td class="heuristics">{{ experiment.configuration.heuristics_set.count }}</td>
+                            {% ifequal experiment.configuration.task.type 'gp' %}
+                                <td class="results" title="Successful / Unsuccessful / Failed">{{ experiment.gpResultsSummary }}</td>
+                            {% else %}
+                                {% if experiment.classification_results %}
+                                    <td class="results" title="Training error / Test error">{{ experiment.classification_results.displayableTrainError }} / {{ experiment.classification_results.displayableTestError }}</td>
+                                {% else %}
+                                    <td class="results" title="Training error / Test error">- / -</td>
+                                {% endif %}
+                            {% endifequal %}
+                            <td class="date">{{ experiment.creation_date|date:"N j, Y, P" }}</td>
+                            {% if experiment.isScheduled %}
+                                <td class="date scheduled" colspan="2">{{ experiment.status_text }}</td>
+                            {% else %}
+                                <td class="date">{{ experiment.start|date:"N j, Y, P" }}</td>
+                                {% if experiment.isRunning %}
+                                    <td class="date running">{{ experiment.status_text }}</td>
+                                {% else %}
+                                    {% if experiment.isFailed %}
+                                        <td class="date failed">{{ experiment.status_text }}</td>
+                                    {% else %}
+                                        <td class="date">{{ experiment.stringDuration|safe }}</td>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="experiment_text">No experiment found</p>
+    {% endif %}
+
+{% endblock content %}

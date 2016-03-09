@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{{ block.super }} - Add a new server{% endblock %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/servers_add.css" />
+{% endblock stylesheets %}
+
+
+{% block content %}
+
+    <h2>Add a new server</h2>
+
+    <form id="infos" method="post" action="/servers/add/" enctype="multipart/form-data">
+        <fieldset>
+            <dl>
+                <dt>{{ form.name.label_tag }}:</dt>
+                <dd>{{ form.name }}</dd>
+                <dd>{{ form.errors.name }}</dd>
+            </dl>
+
+            <dl>
+                <dt>{{ form.address.label_tag }}:</dt>
+                <dd>{{ form.address }}</dd>
+                <dd>{{ form.errors.address }}</dd>
+            </dl>
+
+            <dl>
+                <dt>{{ form.port.label_tag }}:</dt>
+                <dd>{{ form.port }}</dd>
+                <dd>{{ form.errors.port }}</dd>
+            </dl>
+        </fieldset>
+
+        <div class="buttons">
+            <input name="submit" class="button" type="submit" value="Add" />
+            <input name="submit" class="button" type="submit" value="Cancel" />
+        </div>
+    </form>
+
+{% endblock content %}

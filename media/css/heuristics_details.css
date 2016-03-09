@@ -1,0 +1,290 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the 'heuristics details' page
+*
+*******************************************************************************/
+
+#heuristic_infos_box
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 11px;
+    background-color: #EFF0EF;
+    padding: 5px 10px 0;
+    margin-bottom: 30px;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+#heuristic_infos_box *
+{
+    padding: 0;
+    margin: 0;
+}
+
+
+#heuristic_infos_box div.tools p.name
+{
+    font-size: 18px;
+    font-weight: bold;
+    color: #993300;
+    margin-top: 5px;
+    text-align: center;
+}
+
+
+#heuristic_infos_box table#heuristic_infos_box_table
+{
+    width: 100%;
+    margin-top: 10px;
+}
+
+
+#heuristic_infos_box_table td.left
+{
+    width: 90px;
+}
+
+
+#heuristic_infos_box_table td.left div
+{
+    text-align: center;
+    position: relative;
+    top: -20px;
+}
+
+
+#heuristic_infos_box div.infos
+{
+    font-size: 13px;
+}
+
+
+#heuristic_infos_box div.infos dt
+{
+    width: 7em;
+    text-align: right;
+    float: left;
+}
+
+
+#heuristic_infos_box div.infos dd
+{
+    margin-left: 8em;
+    padding-left: 5px;
+    margin-bottom: 4px;
+}
+
+
+#heuristic_infos_box div.infos dd.bottomspace
+{
+    margin-bottom: 20px;
+}
+
+
+#heuristic_infos_box div.infos dd.justified
+{
+    text-align: justify;
+}
+
+
+#heuristic_infos_box div.infos a
+{
+    font-weight: bold;
+    color: #993300;
+    text-decoration: none;
+}
+
+
+#heuristic_infos_box div.infos a:hover
+{
+    text-decoration: underline;
+}
+
+
+#heuristic_infos_box div.infos a.disabled
+{
+    color: #FF0000;
+}
+
+
+#heuristic_infos_box div.infos dd span.deleted
+{
+    color: #000000;
+    font-weight: bold;
+}
+
+
+#heuristic_infos_box p.warning
+{
+    color: #FF0000;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    padding-bottom: 20px;
+}
+
+
+/********************************* UPLOAD BAR *********************************/
+
+div#heuristics_upload_bar
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #EFF0EF;
+    padding: 10px 15px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div#heuristics_upload_bar.hidden
+{
+    display: none;
+}
+
+
+div#heuristics_upload_bar ul
+{
+    height: 2em;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+
+div#heuristics_upload_bar li
+{
+    display: block;
+    float: left;
+    margin-right: 5px;
+    line-height: 2em;
+}
+
+
+div#heuristics_upload_bar li.right
+{
+    float: right;
+}
+
+
+div#heuristics_upload_bar li.rightmost
+{
+    margin-right: 0;
+}
+
+
+div#heuristics_upload_bar input.button
+{
+    border: 1px solid #B0B0B0;
+    background-color: #FAFAFA;
+    background-image: url(/images/bg_button.gif);
+    color: #000000;
+    padding: 1px 3px;
+    width: auto;
+}
+
+
+div#heuristics_upload_bar input.disabled
+{
+    color: #909090;
+}
+
+
+/***************************** EVALUATION RESULTS *****************************/
+
+table#evaluation_results
+{
+    padding: 0;
+    margin-left: 0px; 
+    border: 1px solid grey;
+    text-align: center;
+    border-collapse: collapse;
+}
+
+table#evaluation_results.spaced
+{
+    margin-top: 10px;
+}
+
+table#evaluation_results thead tr
+{
+    border-bottom: 1px solid grey;
+    font-style: italic;
+    font-weight: normal;
+    padding:  2px 4px;
+}
+
+table#evaluation_results thead th#h1
+{
+    border-bottom: inherit;
+    font-style: inherit;
+    font-weight: inherit;
+    padding:  inherit;
+}
+
+table#evaluation_results thead th#h2
+{
+    border-bottom: inherit;
+    font-style: inherit;
+    font-weight: inherit;
+    padding:  inherit;
+    border-left: 1px solid grey;
+
+}
+
+table#evaluation_results thead th#h3
+{
+    border-bottom: inherit;
+    font-style: inherit;
+    font-weight: inherit;
+    padding:  inherit;
+    border-left: 1px solid grey;
+}
+
+table#evaluation_results thead th#h4
+{
+    border-bottom: inherit;
+    font-style: inherit;
+    font-weight: inherit;
+    padding:  inherit;
+    border-left: 1px solid grey;
+}
+
+
+table#evaluation_results tbody tr
+{
+    border-bottom: 1px solid grey;
+    font-weight: normal;
+    padding:  0px 0px;
+}
+
+table#evaluation_results tbody td
+{        
+    padding:  2px 4px;
+}
+
+table#evaluation_results tbody td.error_rate,
+table#evaluation_results tbody td.rank
+{
+    border-left: 1px solid grey;
+}
+
+table#evaluation_results tbody td.inprogress
+{
+    border-left: 1px solid grey;
+    color: #0000FF;    
+}
+
+table#evaluation_results tbody td.error
+{
+    border-left: 1px solid grey;
+    color: #FF0000;    
+}

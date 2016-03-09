@@ -1,0 +1,42 @@
+{% if mode.can_upload %}
+    <script type="text/javascript">
+        
+        // Declarations
+        var xmlhttp = null;
+
+        function file_to_upload_changed(input, buttonName)
+        {
+            var button = $("input#" + buttonName)[0];
+            
+            if (input.value == '')
+            {
+                button.className = 'button disabled';
+            }
+            else
+            {
+                button.className = 'button';
+            }
+        }
+
+        function upload_heuristic(inputName)
+        {
+            var input = $("input#" + inputName)[0];
+
+            if (input.value != '')
+            {
+                $.alerts.okButton = 'I accept';
+                $.alerts.cancelButton = 'Cancel';
+            
+                jConfirm('{{ text_upload_confirmation|safe|addslashes }}', 'Upload confirmation', function(r) {
+                    if (r)
+                    {
+                        document.forms['upload'].submit();
+                    }
+                });
+            }
+            
+            return false;
+        }
+
+    </script>
+{% endif %}

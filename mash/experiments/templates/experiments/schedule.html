@@ -1,0 +1,1197 @@
+{% extends "experiments/base_experiments.html" %}
+
+{% block title %}{{ block.super }} - Schedule a {{ experiment_type }} experiment{% endblock %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/experiments_schedule.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    <script type="text/javascript">
+
+        // Add the 'indexOf' method to the 'Array' class for browsers that don't support it
+        if (!Array.prototype.indexOf)
+        {
+              Array.prototype.indexOf = function(elt /*, from*/)
+              {
+                    var len = this.length;
+
+                    var from = Number(arguments[1]) || 0;
+                    from = (from < 0)
+                         ? Math.ceil(from)
+                         : Math.floor(from);
+                    if (from < 0)
+                      from += len;
+
+                    for (; from < len; from++)
+                    {
+                        if (from in this && this[from] === elt)
+                            return from;
+                    }
+                    
+                    return -1;
+              };
+        }
+
+        function compare_by_name(a, b)
+        {
+            if (a.name < b.name)
+                return -1;
+            else if (a.name > b.name)
+                return 1;
+            return 0;
+        }
+
+    
+        // Type declarations
+        function Predictor(name, description)
+        {
+            this.name        = name;
+            this.description = description;
+        }
+
+        function Heuristic(id, name)
+        {
+            this.id   = id;
+            this.name = name;
+        }
+
+{% ifequal task_type "gp" %}
+        function Environment(name, description)
+        {
+            this.name        = name;
+            this.description = description;
+        }
+
+        function Goal(name, description)
+        {
+            this.name                   = name;
+            this.description            = description;
+            this.environments           = new Array();
+            this.selected_environment   = null;
+        }
+
+        function Task(name, description)
+        {
+            this.name               = name;
+            this.description        = description;
+            this.goals              = new Array();
+            this.predictors         = new Array();
+            this.selected_goal      = null;
+            this.selected_predictor = null;
+        }
+{% else %}
+        function Label(index, name)
+        {
+            this.index = index;
+            this.name  = name;
+        }
+
+        function Database(name, description, has_standard_sets)
+        {
+            this.name              = name;
+            this.description       = description;
+            this.has_standard_sets = has_standard_sets;
+            this.labels            = new Array();
+            this.selected_labels   = new Array();
+        }
+{% endifequal %}
+    
+
+        // Declarations
+{% ifequal task_type "gp" %}
+        var goalplanning_tasks  = new Array();
+        var databases           = null;
+        var predictors          = null;
+{% else %}
+        var goalplanning_tasks  = null;
+        var databases           = new Array();
+        var predictors          = new Array();
+{% endifequal %}
+        var latest_heuristic_versions     = new Array();
+        var all_heuristic_versions        = new Array();
+        var selected_heuristics           = new Array();
+        var own_latest_heuristic_versions = new Array();
+        var own_all_heuristic_versions    = new Array();
+        var current_filter                = '';
+        var nb_public_heuristics          = 0;
+
+        // Initialisations
+{% ifequal task_type "gp" %}
+    {% for gptask in goalplanning_tasks_list %}
+        // Task '{{ gptask.name }}'
+        task = new Task('{{ gptask.name }}', '{{ gptask.description|safe }}');
+        
+        {% for gpgoal in gptask.goals.all %}
+        goal = new Goal('{{ gpgoal.name }}', '{{ gpgoal.description|safe }}');
+            {% for gpenv in gpgoal.environments.all %}
+        goal.environments[{{ gpenv.id }}] = new Environment('{{ gpenv.name }}', '{{ gpenv.description|safe }}');
+            {% endfor %}
+        task.goals[{{ gpgoal.id }}] = goal;
+        {% endfor %}
+
+        {% for link in predictors %}
+        {% ifequal link.task gptask.name %}
+        {% for predictor in link.predictors %}
+        task.predictors[{{ predictor.id }}] = new Predictor('{{ predictor.fullname }}'{% ifequal predictor.status "EXP" %}+ ' (experimental)'{% endifequal %}, '{{ predictor.description|safe }}');
+        {% endfor %}
+        {% endifequal %}
+        {% endfor %}
+
+        goalplanning_tasks[{{ gptask.id }}] = task;
+    {% endfor %}
+
+    goalplanning_tasks[{{ selected_goalplanning_task }}].selected_goal = goalplanning_tasks[{{ selected_goalplanning_task }}].goals[{{ selected_goalplanning_goal }}];
+    goalplanning_tasks[{{ selected_goalplanning_task }}].selected_goal.selected_environment = goalplanning_tasks[{{ selected_goalplanning_task }}].selected_goal.environments[{{ selected_goalplanning_environment }}];
+    goalplanning_tasks[{{ selected_goalplanning_task }}].selected_predictor = goalplanning_tasks[{{ selected_goalplanning_task }}].predictors[{{ selected_predictor }}];
+
+{% else %}
+    {% for database in databases_list %}
+        // Database '{{ database.name }}'
+        db = new Database('{{ database.name }}', '{{ database.description|safe }}', {{ database.has_standard_sets|lower }});
+        {% for label in database.labels.all %}db.labels.push(new Label({{ label.index }}, '{{ label.name }}'));
+        {% endfor %}
+
+        db.labels.sort(compare_by_name);
+        
+        databases[{{ database.id }}] = db;
+
+    {% endfor %}
+
+        {% for predictor in predictors %}predictors[{{ predictor.id }}] = new Predictor('{{ predictor.fullname }}', '{{ predictor.description|safe }}');
+        {% endfor %}
+
+{% endifequal %}
+
+        {% if not experiment_is_advanced %}
+            {% for heuristic in own_latest_heuristic_versions %}own_latest_heuristic_versions.push(new Heuristic({{ heuristic.id }}, '{{ heuristic.name }}'));
+            {% endfor %}
+
+            {% for heuristic in own_all_heuristic_versions %}own_all_heuristic_versions.push(new Heuristic({{ heuristic.id }}, '{{ heuristic.name }}'));
+            {% endfor %}
+        {% endif %}
+
+        {% for heuristic in latest_heuristic_versions %}latest_heuristic_versions.push(new Heuristic({{ heuristic.id }}, '{{ heuristic.name }}'));
+        {% endfor %}
+
+        {% for heuristic in all_heuristic_versions %}all_heuristic_versions.push(new Heuristic({{ heuristic.id }}, '{{ heuristic.name }}'));
+        {% endfor %}
+
+
+{% ifequal task_type "gp" %}
+
+        function selectedPredictorChanged()
+        {
+            var selected_task = goalplanning_tasks_list.options[goalplanning_tasks_list.selectedIndex].value;
+
+            var task = goalplanning_tasks[selected_task];
+            var predictor = null;
+
+            if (task.predictors.length > 0)
+            {
+                if (predictors_list.selectedIndex != -1)
+                {
+                    var selected_predictor = predictors_list.options[predictors_list.selectedIndex].value;
+                    document.forms['configuration'].id_predictor.value = selected_predictor;
+                    predictor = task.predictors[selected_predictor];
+                }
+
+                task.selected_predictor = predictor;
+            }
+
+            if (predictor != null)
+            {
+                document.getElementById('id_predictor_description').textContent = predictor.description;
+            }
+            else
+            {
+                task.selected_predictor = null;
+                document.getElementById('id_predictor_description').textContent = '';
+            }
+        }
+
+
+        function selectedGoalplanningEnvironmentChanged()
+        {
+            var selected_task = goalplanning_tasks_list.options[goalplanning_tasks_list.selectedIndex].value;
+
+            var task = goalplanning_tasks[selected_task];
+            var goal = task.selected_goal;
+            var environment = null;
+
+            if ((goal != null) && (goal.environments.length > 0))
+            {
+                environment = goal.selected_environment;
+                
+                if (goalplanning_environments_list.selectedIndex != -1)
+                {
+                    var selected_environment = goalplanning_environments_list.options[goalplanning_environments_list.selectedIndex].value;
+                    document.forms['configuration'].id_environment.value = selected_environment;
+                    environment = goal.environments[selected_environment];
+                }
+                else
+                {
+                    var index = 0;
+                    for (var i = 0; i < goal.environments.length; ++i)
+                    {
+                        if (goal.environments[i] != null)
+                        {
+                            if ((environment == null) || (goal.environments[i] == environment))
+                            {
+                                environment = goal.environments[i];
+                                goalplanning_environments_list.options[index].selected = true;
+                                document.forms['configuration'].id_environment.value = i;
+                                break;
+                            }
+
+                            ++index;
+                        }
+                    }
+                }
+                
+                goal.selected_environment = environment;
+            }
+            
+            if (environment != null)
+            {
+                document.getElementById('id_goalplanning_environment_description').textContent = environment.description;
+            }
+            else
+            {
+                if (goal != null)
+                    goal.selected_environment = null;
+                
+                document.getElementById('id_goalplanning_environment_description').textContent = '';
+            }
+        }
+
+
+        function selectedGoalplanningGoalChanged()
+        {
+            var selected_task = goalplanning_tasks_list.options[goalplanning_tasks_list.selectedIndex].value;
+
+            var task = goalplanning_tasks[selected_task];
+            var goal = null;
+
+            if (task.goals.length > 0)
+            {
+                goal = task.selected_goal;
+
+                if (goalplanning_goals_list.selectedIndex != -1)
+                {
+                    var selected_goal = goalplanning_goals_list.options[goalplanning_goals_list.selectedIndex].value;
+                    document.forms['configuration'].id_goal.value = selected_goal;
+                    goal = task.goals[selected_goal];
+                }
+                else
+                {
+                    var index = 0;
+                    for (var i = 0; i < task.goals.length; ++i)
+                    {
+                        if (task.goals[i] != null)
+                        {
+                            if ((goal == null) || (task.goals[i] == goal))
+                            {
+                                goal = task.goals[i];
+                                goalplanning_goals_list.options[index].selected = true;
+                                document.forms['configuration'].id_goal.value = i;
+                                break;
+                            }
+
+                            ++index;
+                        }
+                    }
+                }
+
+                task.selected_goal = goal;
+            }
+
+            if (goal != null)
+            {
+                document.getElementById('id_goalplanning_goal_description').textContent = goal.description;
+            }
+            else
+            {
+                task.selected_goal = null;
+                document.getElementById('id_goalplanning_goal_description').textContent = '';
+            }
+
+
+            while (goalplanning_environments_list.length > 0)
+                goalplanning_environments_list.remove(0);
+
+            if (goal != null)
+            {
+                var index = 0;
+                for (var i = 0; i < goal.environments.length; ++i)
+                {
+                    if ((goal.environments[i] != undefined) && (goal.environments[i] != null))
+                    {
+                        goalplanning_environments_list.options[index] = new Option(goal.environments[i].name, i);
+                        index += 1;
+                    }
+                }
+            }
+
+            selectedGoalplanningEnvironmentChanged();
+        }
+
+
+        function selectedGoalplanningTaskChanged()
+        {
+            var selected_task = goalplanning_tasks_list.options[goalplanning_tasks_list.selectedIndex].value;
+
+            document.forms['configuration'].id_task_type.value = selected_task;
+
+            var task = goalplanning_tasks[selected_task];
+
+            document.getElementById('id_goalplanning_task_description').textContent = task.description;
+
+            while (goalplanning_goals_list.length > 0)
+                goalplanning_goals_list.remove(0);
+
+            var index = 0;
+            for (var i = 0; i < task.goals.length; ++i)
+            {
+                if ((task.goals[i] != undefined) && (task.goals[i] != null))
+                {
+                    goalplanning_goals_list.options[index] = new Option(task.goals[i].name, i);
+                    index += 1;
+                }
+            }
+
+            while (predictors_list.length > 0)
+                predictors_list.remove(0);
+
+            var index = 0;
+            for (var i = 0; i < task.predictors.length; ++i)
+            {
+                if ((task.predictors[i] != undefined) && (task.predictors[i] != null))
+                {
+                    predictors_list.options[index] = new Option(task.predictors[i].name, i);
+
+                    if (i == task.predictors.indexOf(task.selected_predictor))
+                        predictors_list.options[index].selected = true;
+                        
+                    index += 1;
+                }
+            }
+
+            selectedGoalplanningGoalChanged();
+            selectedPredictorChanged();
+        }
+
+{% else %}
+
+        function selectedLabelsChanged()
+        {
+            var selected_database = databases_list.options[databases_list.selectedIndex].value;
+
+            var labels_list = document.getElementById('id_labels_list');
+            
+            var database = databases[selected_database];
+
+            database.selected_labels = new Array();
+            for (var i = 0; i < labels_list.options.length; ++i)
+            {
+                if (labels_list.options[i].selected)
+                    database.selected_labels.push(labels_list.options[i].value);
+            }
+        
+            document.forms['configuration'].id_labels.value = database.selected_labels.join(' ');
+
+            document.getElementById('id_labels_infos').textContent = 'Selected: ' + database.selected_labels.length + '/' + database.labels.length;
+        }
+
+
+        function selectedDatabaseChanged()
+        {
+            var selected_database = databases_list.options[databases_list.selectedIndex].value;
+
+            document.forms['configuration'].id_database.value = selected_database;
+
+            var database = databases[selected_database];
+
+            document.getElementById('id_database_description').textContent = database.description;
+
+            var labels_list = document.getElementById('id_labels_list');
+
+            while (labels_list.length > 0)
+                labels_list.remove(0);
+            
+            for (var i = 0; i < database.labels.length; ++i)
+            {
+                labels_list.options[i] = new Option(database.labels[i].name, database.labels[i].index);
+                
+                if (database.selected_labels.indexOf(labels_list.options[i].value) != -1)
+                    labels_list.options[i].selected = true;
+            }
+
+            if (database.has_standard_sets)
+            {
+                document.getElementById('id_use_standard_sets').disabled = false;
+                document.getElementById('id_training_ratio').disabled = document.getElementById('id_use_standard_sets').checked;
+                if (document.getElementById('id_training_ratio').value == '')
+                    document.getElementById('id_training_ratio').value = 0.5;
+            }
+            else
+            {
+                document.getElementById('id_use_standard_sets').disabled = true;
+                document.getElementById('id_use_standard_sets').checked = false;
+                document.getElementById('id_training_ratio').disabled = false;
+            }
+            
+            selectedLabelsChanged();
+        }
+
+
+        function useStandardSetsChanged()
+        {
+            var el = document.getElementById('id_use_standard_sets');
+            
+            document.getElementById('id_training_ratio').disabled = (!el.disabled && el.checked);
+        }
+
+
+        function selectAllLabels()
+        {
+            var labels_list = document.getElementById('id_labels_list');
+            labels_list.onchange = null;
+ 
+    		for (var i = 0; i < labels_list.options.length; i++)
+    			labels_list.options[i].selected = true;
+
+            labels_list.onchange = selectedLabelsChanged;
+            
+            selectedLabelsChanged();
+            
+            return false;
+        }
+
+
+        function selectedPredictorChanged()
+        {
+            var selected_predictor = predictors_list.options[predictors_list.selectedIndex].value;
+
+            document.forms['configuration'].id_predictor.value = selected_predictor;
+
+            document.getElementById('id_predictor_description').textContent = predictors[selected_predictor].description;
+        }
+
+{% endifequal %}
+
+
+        function initSelectedHeuristicsList()
+        {
+            var heuristics_list = document.forms['configuration'].id_heuristics.value.split(' ');
+
+            selected_heuristics = new Array();
+            for (var i = 0; i < heuristics_list.length; ++i)
+                selected_heuristics.push(heuristics_list[i]);
+
+            var count = 0;
+            
+            {% if not experiment_is_advanced %}
+                if (document.getElementById('id_show_all_versions').value == '0')
+                    count = latest_heuristic_versions.length + own_latest_heuristic_versions.length;
+                else
+                    count = all_heuristic_versions.length + own_all_heuristic_versions.length;
+            {% else %}
+                if (document.getElementById('id_show_all_versions').value == '0')
+                    count = latest_heuristic_versions.length;
+                else
+                    count = all_heuristic_versions.length;
+            {% endif %}
+
+            document.getElementById('id_heuristics_infos').textContent = 'Selected: ' + selected_heuristics.length + '/' + count;
+        }
+
+
+        function selectedHeuristicsChanged()
+        {
+            var heuristics_list = document.getElementById('id_heuristics_list');
+
+            selected_heuristics = new Array();
+            for (var i = 0; i < heuristics_list.options.length; ++i)
+            {
+                selected_heuristics.push(heuristics_list.options[i].value);
+            }
+        
+            document.forms['configuration'].id_heuristics.value = selected_heuristics.join(' ');
+
+            var count = 0;
+            
+            {% if not experiment_is_advanced %}
+                if (document.getElementById('id_show_all_versions').value == '0')
+                    count = latest_heuristic_versions.length + own_latest_heuristic_versions.length;
+                else
+                    count = all_heuristic_versions.length + own_all_heuristic_versions.length;
+            {% else %}
+                if (document.getElementById('id_show_all_versions').value == '0')
+                    count = latest_heuristic_versions.length;
+                else
+                    count = all_heuristic_versions.length;
+            {% endif %}
+
+            document.getElementById('id_heuristics_infos').textContent = 'Selected: ' + selected_heuristics.length + '/' + count;
+        }
+
+
+        function _addHeuristics(list_name, ownHeuristics)
+        {
+            var heuristics_list = document.getElementById(list_name);
+            var selected_heuristics_list = document.getElementById('id_heuristics_list');
+
+            var previousList = new Array();
+            while (selected_heuristics_list.length > 0)
+            {
+                previousList.push(selected_heuristics_list.options[0]);
+                selected_heuristics_list.remove(0);
+            }
+
+            var pos = 0;
+            var offset = 0;
+            for (var i = 0; i < heuristics_list.options.length; ++i)
+            {
+                var option = heuristics_list.options[i];
+                
+                if (option.selected)
+                {
+                    var name = option.text;
+
+                    if (ownHeuristics)
+                        name = '{{ request.user.username.lower }}/' + name;
+
+                    while ((pos < previousList.length) && (previousList[pos].text < name))
+                    {
+                        selected_heuristics_list.options[pos + offset] = previousList[pos];
+                        ++pos;
+                    }
+                    
+                    selected_heuristics_list.options[pos + offset] = new Option(name, option.value);
+
+                    heuristics_list.remove(i);
+
+                    ++offset;
+                    --i;
+                }
+            }
+
+            while (pos < previousList.length)
+            {
+                selected_heuristics_list.options[pos + offset] = previousList[pos];
+                ++pos;
+            }
+            
+            selectedHeuristicsChanged();
+        }
+        
+        
+        function addHeuristics()
+        {
+            {% if not experiment_is_advanced %}
+                var public_heuristics_list = document.getElementById('id_other_heuristics_list');
+            
+                var nb_selected = 0;
+                for (var i = 0; i < public_heuristics_list.options.length; ++i)
+                {
+                    if (public_heuristics_list.options[i].selected)
+                        ++nb_selected;
+                }
+                        
+                if (nb_public_heuristics + nb_selected > {{ max_nb_public_heuristics }})
+                {
+                    alert("You can't select more than {{ max_nb_public_heuristics }} public heuristics!");
+                    return false;
+                }
+            
+                nb_public_heuristics += nb_selected;
+                
+                if (nb_public_heuristics == {{ max_nb_public_heuristics }})
+                {
+                    public_heuristics_list.disabled = true;
+                    public_heuristics_list.className = 'disabled';
+                }
+                else
+                {
+                    public_heuristics_list.disabled = false;
+                    
+                    if (current_filter == '')
+                        public_heuristics_list.className = '';
+                    else
+                        public_heuristics_list.className = 'filtered';
+                }
+            
+                _addHeuristics('id_own_heuristics_list', true);
+            {% endif %}
+            
+            _addHeuristics('id_other_heuristics_list', false);
+        
+            return false;
+        }
+
+
+        function _removeHeuristics(list_name, ownHeuristics)
+        {
+            var heuristics_list = document.getElementById(list_name);
+            var selected_heuristics_list = document.getElementById('id_heuristics_list');
+
+            var previousList = new Array();
+            while (heuristics_list.length > 0)
+            {
+                previousList.push(heuristics_list.options[0]);
+                heuristics_list.remove(0);
+            }
+
+            var pos = 0;
+            var offset = 0;
+            for (var i = 0; i < selected_heuristics_list.options.length; ++i)
+            {
+                var option = selected_heuristics_list.options[i];
+                
+                if (option.selected)
+                {
+                    var name = option.text;
+
+                    {% if not experiment_is_advanced %}
+                        if (ownHeuristics)
+                        {
+                            if (!name.match('^' + '{{ request.user.username.lower }}/'))
+                                continue;
+
+                            name = name.substr('{{ request.user.username.lower }}/'.length);
+                        }
+                        else
+                        {
+                            if (name.match('^' + '{{ request.user.username.lower }}/'))
+                                continue;
+                        }
+                    {% endif %}
+
+                    while ((pos < previousList.length) && (previousList[pos].text < name))
+                    {
+                        heuristics_list.options[pos + offset] = previousList[pos];
+                        ++pos;
+                    }
+                    
+                    if (ownHeuristics || filter(name))
+                    {
+                        heuristics_list.options[pos + offset] = new Option(name, option.value);
+                        ++offset;
+                    }
+
+                    {% if not experiment_is_advanced %}
+                        if (!ownHeuristics)
+                            --nb_public_heuristics;
+                    {% endif %}
+                    
+                    selected_heuristics_list.remove(i);
+                    --i;
+                }
+            }
+
+            while (pos < previousList.length)
+            {
+                heuristics_list.options[pos + offset] = previousList[pos];
+                ++pos;
+            }
+            
+            selectedHeuristicsChanged();
+        }
+        
+        
+        function removeHeuristics()
+        {
+            {% if not experiment_is_advanced %}
+                _removeHeuristics('id_own_heuristics_list', true);
+            {% endif %}
+            
+            _removeHeuristics('id_other_heuristics_list', false);
+        
+            {% if not experiment_is_advanced %}
+                var public_heuristics_list = document.getElementById('id_other_heuristics_list');
+
+                if (nb_public_heuristics == {{ max_nb_public_heuristics }})
+                {
+                    public_heuristics_list.disabled = true;
+                    public_heuristics_list.className = 'disabled';
+                }
+                else
+                {
+                    public_heuristics_list.disabled = false;
+                    
+                    if (current_filter == '')
+                        public_heuristics_list.className = '';
+                    else
+                        public_heuristics_list.className = 'filtered';
+                }
+            {% endif %}
+        
+            return false;
+        }
+        
+
+        function _updateHeuristicsList(list_name, list, ownHeuristics)
+        {
+            var heuristics_list = document.getElementById(list_name);
+
+            while (heuristics_list.length > 0)
+                heuristics_list.remove(0);
+
+            for (var i = 0; i < list.length; ++i)
+            {
+                if ((selected_heuristics.indexOf(list[i].id.toString()) == -1) && (ownHeuristics || filter(list[i].name)))
+                    heuristics_list.options[heuristics_list.options.length] = new Option(list[i].name, list[i].id);
+            }
+        }
+
+
+        function _updateSelectedHeuristicsList(list_own, list_others)
+        {
+            var selected_heuristics_list = document.getElementById('id_heuristics_list');
+
+            for (var i = 0; i < selected_heuristics.length; ++i)
+            {
+                var done = false;
+
+                for (var j = 0; j < list_own.length; ++j)
+                {
+                    if (list_own[j].id.toString() == selected_heuristics[i])
+                    {
+                        selected_heuristics_list.options[selected_heuristics_list.options.length] = new Option('{{ request.user.username.lower }}/' + list_own[j].name, list_own[j].id);
+                        done = true;
+                        break;
+                    }
+                }
+
+                if (done)
+                    continue;
+
+                for (var j = 0; j < list_others.length; ++j)
+                {
+                    if (list_others[j].id.toString() == selected_heuristics[i])
+                    {
+                        selected_heuristics_list.options[selected_heuristics_list.options.length] = new Option(list_others[j].name, list_others[j].id);
+                        break;
+                    }
+                }
+            }
+        }
+
+
+        function updateHeuristicsList()
+        {
+            var selected_heuristics_list = document.getElementById('id_heuristics_list');
+
+            while (selected_heuristics_list.length > 0)
+                selected_heuristics_list.remove(0);
+
+            if (document.getElementById('id_show_all_versions').value == '0')
+            {
+                {% if not experiment_is_advanced %}
+                    _updateHeuristicsList('id_own_heuristics_list', own_latest_heuristic_versions, true);
+                {% endif %}
+                
+                _updateHeuristicsList('id_other_heuristics_list', latest_heuristic_versions, false);
+                _updateSelectedHeuristicsList(own_latest_heuristic_versions, latest_heuristic_versions);
+            }
+            else
+            {
+                {% if not experiment_is_advanced %}
+                    _updateHeuristicsList('id_own_heuristics_list', own_all_heuristic_versions, true);
+                {% endif %}
+                
+                _updateHeuristicsList('id_other_heuristics_list', all_heuristic_versions, false);
+                _updateSelectedHeuristicsList(own_all_heuristic_versions, all_heuristic_versions);
+            }
+        
+            selectedHeuristicsChanged();
+        }
+
+
+        function showAllHeuristicVersions()
+        {
+            if (document.getElementById('id_show_all_versions').value == '0')
+            {
+                document.getElementById('id_show_all_versions').value = '1';
+                document.getElementById('id_heuristics_show_all').style.display = 'none';
+                document.getElementById('id_heuristics_show_latest').style.display = 'inline';
+                
+                updateHeuristicsList();
+            }
+            
+            return false;
+        }
+
+
+        function showLatestHeuristicVersions()
+        {
+            if (document.getElementById('id_show_all_versions').value == '1')
+            {
+                document.getElementById('id_show_all_versions').value = '0';
+                document.getElementById('id_heuristics_show_all').style.display = 'inline';
+                document.getElementById('id_heuristics_show_latest').style.display = 'none';
+                
+                updateHeuristicsList();
+            }
+            
+            return false;
+        }
+
+
+        function filter(name)
+        {
+            if (current_filter == '')
+                return true;
+            
+            if (!name.match(current_filter))
+                return false;
+            
+            return true;
+        }
+        
+
+        function heuristicsFilterChanged()
+        {
+            var heuristics_filter = document.getElementById('id_heuristics_filter');
+            
+            current_filter = heuristics_filter.value;
+
+            var heuristics_list = document.getElementById('id_other_heuristics_list');
+            var list = null;
+
+            {% if not experiment_is_advanced %}
+                if (nb_public_heuristics < {{ max_nb_public_heuristics }})
+                {
+            {% endif %}
+                    if (current_filter == '')
+                        heuristics_list.className = '';
+                    else
+                        heuristics_list.className = 'filtered';
+            {% if not experiment_is_advanced %}
+                }
+            {% endif %}
+
+            if (document.getElementById('id_show_all_versions').value == '0')
+                list = latest_heuristic_versions;
+            else
+                list = all_heuristic_versions;
+
+            while (heuristics_list.length > 0)
+                heuristics_list.remove(0);
+
+            for (var i = 0; i < list.length; ++i)
+            {
+                if ((selected_heuristics.indexOf(list[i].id.toString()) == -1) && filter(list[i].name))
+                    heuristics_list.options[heuristics_list.options.length] = new Option(list[i].name, list[i].id);
+            }
+        }
+
+
+    {% if experiment_is_advanced %}
+
+        function selectedHeuristicsTypeChanged()
+        {
+            var heuristics_type_element = document.getElementById('id_heuristics_type');
+            var heuristics_type = heuristics_type_element.options[heuristics_type_element.selectedIndex].value;
+
+            if (heuristics_type == 'LIST')
+                document.getElementById('id_detailed_heuristics').style.display = 'block';
+            else
+                document.getElementById('id_detailed_heuristics').style.display = 'none';
+        }
+
+    {% endif %}
+
+    
+    </script>
+{% endblock %}
+
+
+{% block content %}
+
+    <h2 class="title">Schedule a {{ experiment_type }} experiment</h2>
+
+    <div class="task_menu">
+        <ul>
+            <li class="first{% ifequal task_type "c" %} active{% endifequal %}"><a href="/experiments/schedule/{{ experiment_type }}/?t=c"><span>Classification</span></a></li>
+            <li {% ifequal task_type "od" %}class="active"{% endifequal %}><a href="/experiments/schedule/{{ experiment_type }}/?t=od"><span>Object detection</span></a></li>
+            <li {% ifequal task_type "gp" %}class="active"{% endifequal %}><a href="/experiments/schedule/{{ experiment_type }}/?t=gp"><span>Goal-planning</span></a></li>
+        </ul>
+    </div>
+
+    <div class="infos_box">
+{% ifequal task_type "gp" %}
+        <p style="color: #e00000; text-align: center;">This type of experiment is still under development and may not produce useful results.</p>
+{% endifequal %}
+{% ifequal task_type "od" %}
+        <p style="color: #e00000; text-align: center;">This type of experiment is still under development and may not produce useful results.</p>
+{% endifequal %}
+
+        <form id="configuration" method="post" action="/experiments/schedule/{{ experiment_type }}/?t={{ task_type}}" enctype="multipart/form-data">
+            <fieldset>
+                <dl>
+                    <dt>{{ form.name.label_tag }}:</dt>
+                    <dd>{{ form.name }}</dd>
+                    <dd><span class="help">{{ form.name.help_text }}</span></dd>
+                    <dd>{{ form.errors.name }}</dd>
+                </dl>
+
+{% ifequal task_type "gp" %}
+                <dl>
+                    <dt>{{ form.task_type.label_tag }}:</dt>
+                    <dd>{{ form.task_type }}</dd>
+                    <dd>
+                        <select id="id_goalplanning_tasks_list" name="goalplanning_tasks_list">
+                            {% for task in goalplanning_tasks_list %}
+                                <option value="{{ task.id }}"{% ifequal selected_goalplanning_task task.id %}selected="selected"{% endifequal %}>{{ task.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </dd>
+                    <dd><span id="id_goalplanning_task_description" class="help"></span></dd>
+                    <dd>{{ form.errors.task_type }}</dd>
+                </dl>
+
+                <dl>
+                    <dt>{{ form.goal.label_tag }}:</dt>
+                    <dd>{{ form.goal }}</dd>
+                    <dd>
+                        <select id="id_goalplanning_goals_list" name="goalplanning_goals_list" multiple="no">
+                        </select>
+                    </dd>
+                    <dd><span id="id_goalplanning_goal_description" class="help"></span></dd>
+                    <dd>{{ form.errors.goal }}</dd>
+                </dl>
+
+                <dl>
+                    <dt>{{ form.environment.label_tag }}:</dt>
+                    <dd>{{ form.environment }}</dd>
+                    <dd>
+                        <select id="id_goalplanning_environments_list" name="goalplanning_environments_list" multiple="no">
+                        </select>
+                    </dd>
+                    <dd><span id="id_goalplanning_environment_description" class="help"></span></dd>
+                    <dd>{{ form.errors.environment }}</dd>
+                </dl>
+
+                <dl>
+                    <dt>{{ form.predictor.label_tag }}:</dt>
+                    <dd>{{ form.predictor }}</dd>
+                    <dd>
+                        <select id="id_predictors_list" name="predictors_list">
+                        </select>
+                    </dd>
+                    <dd><span id="id_predictor_description" class="help"></span></dd>
+                    <dd>{{ form.errors.predictor }}</dd>
+                </dl>
+{% else %}
+                <dl>
+                    <dt>{{ form.database.label_tag }}:</dt>
+                    <dd>{{ form.database }}</dd>
+                    <dd>
+                        <select id="id_databases_list" name="databases_list">
+                            {% for database in databases_list %}
+                                <option value="{{ database.id }}"{% ifequal selected_database database.id %}selected="selected"{% endifequal %}>{{ database.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </dd>
+                    <dd><span id="id_database_description" class="help"></span></dd>
+                    <dd>{{ form.errors.database }}</dd>
+                </dl>
+
+                <dl>
+                    <dt>{{ form.labels.label_tag }}:</dt>
+                    <dd>{{ form.labels }}</dd>
+                    <dd class="list_tools"><span id="id_labels_infos">Selected: 0/0</span><a href="#" onclick="return selectAllLabels();">[select all]</a></dd>
+                    <dd>
+                        <select id="id_labels_list" name="labels_list" multiple="yes" size="10">
+                        </select>
+                    </dd>
+                    <dd><span class="help">{{ form.labels.help_text }}</span></dd>
+                    <dd>{{ form.errors.labels }}</dd>
+                </dl>
+
+                <dl>
+                    <dt>{{ form.use_standard_sets.label_tag }}:</dt>
+                    <dd class="left-aligned">{{ form.use_standard_sets }}</dd>
+                    <dd><span class="help">{{ form.use_standard_sets.help_text }}</span></dd>
+                    <dd>{{ form.errors.use_standard_sets }}</dd>
+                </dl>
+
+                <dl>
+                    <dt>{{ form.training_ratio.label_tag }}:</dt>
+                    <dd>{{ form.training_ratio }}</dd>
+                    <dd><span class="help">{{ form.training_ratio.help_text }}</span></dd>
+                    <dd>{{ form.errors.training_ratio }}</dd>
+                </dl>
+
+                <dl>
+                    <dt>{{ form.predictor.label_tag }}:</dt>
+                    <dd>{{ form.predictor }}</dd>
+                    <dd>
+                        <select id="id_predictors_list" name="predictors_list">
+                            {% for predictor in predictors %}
+                                <option value="{{ predictor.id }}"{% ifequal selected_predictor predictor.id %}selected="selected"{% endifequal %}>{{ predictor.fullname }}{% ifequal predictor.status "EXP" %} (experimental){% endifequal %}</option>
+                            {% endfor %}
+                        </select>
+                    </dd>
+                    <dd><span id="id_predictor_description" class="help"></span></dd>
+                    <dd>{{ form.errors.predictor }}</dd>
+                </dl>
+{% endifequal %}
+
+                {% if experiment_is_advanced %}
+                    <dl>
+                        <dt>{{ form.predictor_settings.label_tag }}:</dt>
+                        <dd>{{ form.predictor_settings }}</dd>
+                        <dd><span class="help">{{ form.predictor_settings.help_text|safe }}</span></dd>
+                        <dd>{{ form.errors.predictor_settings }}</dd>
+                    </dl>
+                {% endif %}
+ 
+                <dl>
+                    <dt>{{ form.heuristics.label_tag }}:</dt>
+                    <dd>{{ form.heuristics }}</dd>
+                    <dd {% if not experiment_is_advanced %}style="display:none;"{% endif %}>{{ form.heuristics_type }}</dd>
+                    <dd id="id_detailed_heuristics" {% if experiment_is_advanced %}class="spaced"{% endif %}>
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <dl class="heuristics_selection">
+
+                                            {% if not experiment_is_advanced %}
+                                                <dd><span>Your heuristics:</span></dd>
+                                                <dd>
+                                                    <select id="id_own_heuristics_list" name="own_heuristics_list" multiple="yes" size="10">
+                                                    </select>
+                                                </dd>
+                                                <dd class="spaced"><span>Other public heuristics:</span></dd>
+                                            {% else %}
+                                                <dd><span>Public heuristics:</span></dd>
+                                            {% endif %}
+                                            
+                                            <dd>
+                                                <select id="id_other_heuristics_list" name="others_heuristics_list" multiple="yes" size={% if not experiment_is_advanced %}"10"{% else %}"22"{% endif %}>
+                                                </select>
+                                            </dd>
+                                            <dd class="filterbox">
+                                                <span>Filter:</span>
+                                                <input id="id_heuristics_filter" name="heuristics_filter" class="blurred" type="text" onblur="if (this.value == '') { this.value = 'Filter…'; this.className = 'blurred'; }" onclick="if (this.value == 'Filter…') { this.value = ''; this.className = ''; }" value="Filter…" title="Filter for heuristics" maxlength="128"/>
+                                            </dd>
+                                        </dl>
+                                    </td>
+                                    <td>
+                                        <dl class="heuristics_selection_tools">
+                                            <dd><span><a id="id_own_heuristics_add" href="#" onclick="return addHeuristics();">[add >>]</a></span></dd>
+                                            <dd><span><a id="id_own_heuristics_remove" href="#" onclick="return removeHeuristics();">[<< remove]</a></span></dd>
+                                        </dl>
+                                    </td>
+                                    <td>
+                                        <dl class="heuristics_selection">
+                                            <dd><span id="id_heuristics_infos">Selected: 0/0</span></dd>
+                                            <dd>
+                                                <select id="id_heuristics_list" name="heuristics_list" multiple="yes" size="22">
+                                                </select>
+                                            </dd>
+                                            <dd class="list_tools_heuristics"><a id="id_heuristics_show_all" {% if form.data.show_all_versions %}style="display:none;" {% endif %}href="#" onclick="return showAllHeuristicVersions();">[show all versions]</a><a id="id_heuristics_show_latest" {% if not form.data.show_all_versions %}style="display:none;" {% endif %}href="#" onclick="return showLatestHeuristicVersions();">[show only latest versions]</a></dd>
+                                        </dl>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </dd>
+                    <dd><span class="help">{{ form.heuristics.help_text }}{% if not experiment_is_advanced %}. <strong>Note that you can only select {{ max_nb_public_heuristics }} public heuristics!</strong>{% endif %}</span></dd>
+
+                    <dd>{{ form.errors.heuristics }}</dd>
+                </dl>
+
+            </fieldset>
+
+            {{ form.show_all_versions }}
+
+            <div class="buttons">
+                <input name="submit" class="button" type="submit" value="Schedule" />
+                <input name="submit" class="button" type="submit" value="Cancel" />
+            </div>
+        </form>
+
+    </div>
+    
+
+    <script type="text/javascript">
+
+        // Event handling
+{% ifequal task_type "gp" %}
+        var goalplanning_tasks_list = document.getElementById('id_goalplanning_tasks_list');
+        goalplanning_tasks_list.onchange = selectedGoalplanningTaskChanged;
+
+        var goalplanning_goals_list = document.getElementById('id_goalplanning_goals_list');
+        goalplanning_goals_list.onchange = selectedGoalplanningGoalChanged;
+
+        var goalplanning_environments_list = document.getElementById('id_goalplanning_environments_list');
+        goalplanning_environments_list.onchange = selectedGoalplanningEnvironmentChanged;
+{% else %}
+        var labels_list = document.getElementById('id_labels_list');
+        labels_list.onchange = selectedLabelsChanged;
+
+        var databases_list = document.getElementById('id_databases_list');
+        databases_list.onchange = selectedDatabaseChanged;
+
+        var use_standard_sets = document.getElementById('id_use_standard_sets');
+        use_standard_sets.onchange = useStandardSetsChanged;
+{% endifequal %}
+
+        var predictors_list = document.getElementById('id_predictors_list');
+        predictors_list.onchange = selectedPredictorChanged;
+
+        {% if experiment_is_advanced %}
+            var heuristics_type = document.getElementById('id_heuristics_type');
+            heuristics_type.onchange = selectedHeuristicsTypeChanged;
+        {% endif %}
+
+        var heuristics_filter = document.getElementById('id_heuristics_filter');
+        heuristics_filter.onkeyup = heuristicsFilterChanged;
+
+
+        // Initialisations
+{% ifequal task_type "gp" %}
+{% else %}
+        var selected_labels = document.forms['configuration'].id_labels;
+        if (selected_labels.value != '-1 -1')
+        {
+            var selected_database = databases_list.options[databases_list.selectedIndex].value;
+            var splitted_labels = selected_labels.value.split(' ');
+            for (var i = 0; i < splitted_labels.length; ++i)
+                databases[selected_database].selected_labels.push(splitted_labels[i]);
+        }
+        else
+        {
+            selected_labels.value = '';
+        }
+{% endifequal %}
+
+        var heuristics_selection = document.forms['configuration'].id_heuristics;
+        if (heuristics_selection.value == '-1')
+            heuristics_selection.value = '';
+
+        {% if experiment_is_advanced %}
+            selectedHeuristicsTypeChanged();
+        {% endif %}
+
+{% ifequal task_type "gp" %}
+        selectedGoalplanningTaskChanged();
+{% else %}
+        selectedDatabaseChanged();
+{% endifequal %}
+
+        selectedPredictorChanged();
+        initSelectedHeuristicsList();
+        updateHeuristicsList();
+
+    </script>
+
+{% endblock content %}

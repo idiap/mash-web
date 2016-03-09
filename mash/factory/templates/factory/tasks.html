@@ -1,0 +1,102 @@
+{% extends "factory/base_factory.html" %}
+{% load assign %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+
+    {% for stylesheet in snippets_css_files %}
+        <link rel="stylesheet" href="{{ stylesheet }}" />
+    {% endfor %}
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super }}
+
+    <script src="/js/rgraph/RGraph.common.core.js" type="text/javascript"></script>
+    <script src="/js/rgraph/RGraph.common.tooltips.js" type="text/javascript"></script>
+    <script src="/js/rgraph/RGraph.common.dynamic.js" type="text/javascript"></script>
+    <script src="/js/rgraph/RGraph.common.effects.js" type="text/javascript"></script>
+    <script src="/js/rgraph/RGraph.hbar.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    $(window).load(function() {
+        if({{tutorial_mode}}&&!{{debug_mode}})
+          $.prompt(tourStatesTasks, { opacity: 0.3, height:"100%", callback: tutorialClosefunc });
+        if({{tutorial_mode}}&&{{debug_mode}})
+          $.prompt(tourStatesDebugTasks, { opacity: 0.3, height:"100%", callback: tutorialClosefunc });
+
+    });
+    </script>
+
+    {% for script in snippets_js_files %}
+        <script type="text/javascript" src="{{ script }}"></script>
+    {% endfor %}
+
+
+    <script type="text/javascript" charset="utf-8">
+
+        // Globals
+        var current_timeouts = new Array();
+        var current_task = 0;
+        var current_sequence = 0;
+        var snippet_start_functions = new Array();
+
+        {% for instrument_view in instrument_views %}
+            snippet_start_functions[{{ instrument_view.id }}] = '{{ snippet.view.js_start_function }}';
+        {% endfor %}
+
+        function add_timeout(callback, delay)
+        {
+            timeout = setTimeout(callback, delay);
+            current_timeouts.push(timeout);
+        }
+
+        function kill_timeouts()
+        {
+            for (var i = 0; i < current_timeouts.length; ++i)
+                clearTimeout(current_timeouts[i]);
+
+            current_timeouts = new Array();
+        }
+
+    </script>
+
+    {% include "factory/slide_tasks_scripts.html" %}
+    {% include "factory/slide_details_scripts.html" %}
+    {% include "factory/slide_sequence_scripts.html" %}
+
+{% endblock scripts %}
+
+
+{% block content %}
+
+    {% assign factory_title "Tasks &amp; results" %}
+    {{ block.super }}
+
+
+    <div id="slider" style="overflow-x: hidden;">
+        <table id="slider_table" {% if debugging_entry %}style="margin-left: -1728px;"{% endif %}>
+            <tr>
+                <td id="tasks" class="slide">{% include "factory/slide_tasks.html" %}</td>
+                <td id="details" class="slide">{% include "factory/slide_details.html" %}</td>
+                <td id="sequence" class="slide">{% include "factory/slide_sequence.html" %}</td>
+            </tr>
+        </table>
+    </div>
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+            getTestResults();
+            
+            {% if debugging_entry %}
+                getTaskDetails({{ debugging_entry.task.taskNumber }}, true);
+                getSequenceDetails({{ debugging_entry.task.taskNumber }}, {{ debugging_entry.sequence }});
+            {% endif %}
+        });
+
+    </script>
+
+{% endblock content %}

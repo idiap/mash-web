@@ -1,0 +1,105 @@
+#diff div.title
+{
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+
+#diff div.title a
+{
+    font-weight: bold;
+    color: #AD3119;
+    text-decoration: none;
+}
+
+
+#diff div.title a:hover
+{
+    text-decoration: underline;
+}
+
+
+#diff div.title span
+{
+    font-family: "Times New Roman";
+    font-size: 1.5em;
+}
+
+
+#diff div.code
+{
+    border: 1px solid #AAAAAA;
+    margin: 0px;
+    overflow-x: auto;
+    background-color: #FFFFFF;
+}
+
+
+#diff div.code table
+{
+    border-collapse: collapse;
+    background-color: #F8F8F8;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+
+
+#diff div.code table tr.del
+{
+    background-color: #FFDDDD;
+}
+
+
+#diff div.code table tr.add
+{
+    background-color: #DDFFDD;
+}
+
+
+
+#diff div.code table td.lineno
+{
+    background-color: #999999;
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: right;
+    width: 1em;
+}
+
+
+#diff div.code table td.new
+{
+    padding-left: 0;
+}
+
+
+#diff div.code table td.code
+{
+    padding-left: 4px;
+    padding-right: 5px;
+}
+
+
+#diff div.code table pre
+{
+    line-height: 1.4em !important;
+    font-family: "Bitstream Vera Sans Mono",Monaco,"Courier New",Courier,monospace;
+    font-size: 11px;
+    margin: 0;
+}
+
+
+#diff div.code table a
+{
+    color: #000000;
+    text-decoration: none;
+}
+
+
+#diff div.code table a:hover
+{
+    text-decoration: underline;
+}

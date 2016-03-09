@@ -1,0 +1,42 @@
+{% load assign %}
+
+
+<div id="{{ list_id }}" class="details_box">
+    <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>{{ title|safe }} ({{ entries.count }})</td></tr></tbody></table></div></a>
+    <div class="content green">
+        <div class="contest_entries_list">
+            <table>
+                <thead>
+                    {{ table_header|safe }}
+                </thead>
+                <tbody>
+                    {% for entry in entries  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="rank">{% if entry.rank %}{{ entry.rank }}{% else %}-{% endif %}</td>
+                            {% if configuration.improvement_reference %}
+                                {% if entry.experiment.classification_results %}
+                                    <td class="improvement" title="Improvement">{{ entry.improvement|stringformat:".2f%%" }}</td>
+                                {% else %}
+                                    <td class="improvement" title="Improvement">-</td>
+                                {% endif %}
+                            {% endif %}
+                            <td class="heuristic"><a href="/heuristics/v{{ entry.heuristic_version.id }}/">{{ entry.heuristic_name }}</a></td>
+                            <td class="summary">{{ entry.heuristic_version.heuristic.short_description }}</td>
+                            <td class="experiment"><a href="/experiments/{{ entry.experiment.id }}/">{{ entry.experiment.name }}</a></td>
+                            {% ifequal entry.contest.configuration.task.type 'gp' %}
+                                <td class="results" title="Successful / Unsuccessful / Failed">{{ entry.experiment.gpResultsSummary }}</td>
+                            {% else %}
+                                {% if entry.experiment.classification_results %}
+                                    <td class="results" title="Training error / Test error">{{ entry.experiment.classification_results.displayableTrainError }} / {{ entry.experiment.classification_results.displayableTestError }}</td>
+                                {% else %}
+                                    <td class="results" title="Training error / Test error">- / -</td>
+                                {% endif %}
+                            {% endifequal %}
+                            <td class="date">{{ entry.experiment.creation_date|date:"N j, Y, P" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,641 @@
+<script type="text/javascript">
+    {% if tutorial_mode %}
+    var p_get_results_sequence = 0;
+    var p_get_record_data = 0;
+    var showImages = false;
+    {% endif %}
+
+    var max_frame = undefined;
+    var must_cancel = false;
+    var actions = null;
+    var retrieving_frames = false;
+
+
+    // Decode Base64
+    var Base64Binary = {
+        _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+        /* will return a  Uint8Array type */
+        decodeArrayBuffer: function(input) {
+            var bytes = Math.ceil( (3*input.length) / 4.0);
+            var ab = new ArrayBuffer(bytes);
+            this.decode(input, ab);
+
+            return ab;
+        },
+
+        decode: function(input, arrayBuffer) {
+            //get last chars to see if are valid
+            var lkey1 = this._keyStr.indexOf(input.charAt(input.length-1));
+            var lkey2 = this._keyStr.indexOf(input.charAt(input.length-1));
+
+            var bytes = Math.ceil( (3*input.length) / 4.0);
+            if (lkey1 == 64) bytes--; //padding chars, so skip
+            if (lkey2 == 64) bytes--; //padding chars, so skip
+
+            var uarray;
+            var chr1, chr2, chr3;
+            var enc1, enc2, enc3, enc4;
+            var i = 0;
+            var j = 0;
+
+            if (arrayBuffer)
+                uarray = new Uint8Array(arrayBuffer);
+            else
+                uarray = new Uint8Array(bytes);
+
+            input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+            for (i=0; i<bytes; i+=3) {
+                //get the 3 octects in 4 ascii chars
+                enc1 = this._keyStr.indexOf(input.charAt(j++));
+                enc2 = this._keyStr.indexOf(input.charAt(j++));
+                enc3 = this._keyStr.indexOf(input.charAt(j++));
+                enc4 = this._keyStr.indexOf(input.charAt(j++));
+
+                chr1 = (enc1 << 2) | (enc2 >> 4);
+                chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+                chr3 = ((enc3 & 3) << 6) | enc4;
+
+                uarray[i] = chr1;
+                if (enc3 != 64) uarray[i+1] = chr2;
+                if (enc4 != 64) uarray[i+2] = chr3;
+            }
+
+            return uarray;
+        }
+    }
+
+
+    function setRGBPixels(canvas, base64_pixels)
+    {
+        var pixels = Base64Binary.decode(base64_pixels);
+
+        var context = canvas.getContext("2d");
+
+        // Create a new pixel array
+        var imageData = context.createImageData(canvas.width, canvas.height);
+
+        var dst_index = 0;
+        var channel_counter = 0;
+
+        for (var src_index = 0; src_index < pixels.length; ++src_index)
+        {
+            imageData.data[dst_index++] = pixels[src_index];
+            ++channel_counter;
+
+            // Alpha channel?
+            if (channel_counter > 2)
+            {
+                imageData.data[dst_index++] = 255;
+                channel_counter = 0;
+            }
+        }
+
+        // Copy the image data back onto the canvas
+        context.putImageData(imageData, 0, 0);
+    }
+
+
+    function setGrayPixels(canvas, base64_pixels)
+    {
+        var pixels = Base64Binary.decode(base64_pixels);
+
+        var context = canvas.getContext("2d");
+
+        // Create a new pixel array
+        var imageData = context.createImageData(canvas.width, canvas.height);
+
+        var dst_index = 0;
+
+        for (var src_index = 0; src_index < pixels.length; ++src_index)
+        {
+            imageData.data[dst_index++] = pixels[src_index];
+            imageData.data[dst_index++] = pixels[src_index];
+            imageData.data[dst_index++] = pixels[src_index];
+            imageData.data[dst_index++] = 255;
+        }
+
+        // Copy the image data back onto the canvas
+        context.putImageData(imageData, 0, 0);
+    }
+
+
+    function back_to_sequences()
+    {
+        kill_timeouts();
+
+        $('#slider_table #details .container').show();
+        $('#slider_table').animate({ marginLeft: "+=864px", }, 1000,
+                                   function() { $('#slider_table #sequence .container').hide(); });
+    }
+
+
+    function getSequenceDetails(task, sequence)
+    {
+        current_task = task;
+        current_sequence = sequence;
+
+        $('#slider_table #sequence #sequence_title').text('Task ' + task + ' - Sequence ' + sequence);
+        $('#slider_table #sequence #sequence_description').text('');
+        $('#slider_table #sequence #sequence_score').hide();
+        $('#slider_table #sequence #sequence_status').hide();
+        $('#slider_table #sequence #sequence_infos').hide();
+        $('#slider_table #sequence #sequence_progress').show();
+        $('#slider_table #sequence #heuristic_selection_box').hide();
+        $('#slider_table #sequence #sequence_error').hide();
+        $('#slider_table #sequence #sequence_heuristic').hide();
+        $('#slider_table #sequence #sequence_obsolete').hide();
+        $('#slider_table #sequence #recorded_data_progress').show();
+        $('#slider_table #sequence #recorded_data_obsolete').hide();
+        $('#slider_table #sequence #sequence_view_more').hide();
+        $('#slider_table #sequence #sequence_view_all').hide();
+
+        $('#slider_table #sequence .frame_container').remove();
+
+        {% if not tutorial_mode %}
+        var url = "/factory/sequence_details/"
+        {% else %}
+        var url = "/factory/sequence_details_tutorial/"
+        {% endif %}
+
+        $.post(url + task + "/" + sequence + "/", { {% if tutorial_mode %}tutorial_step:p_get_results_sequence,{% endif %} },
+                function(data) {
+                    var parsed_data = JSON.parse(data);
+
+                    process_menu_status(parsed_data.menu_status);
+
+                    $('#slider_table #sequence #sequence_description').text(parsed_data['description']);
+
+                    var elStatus = $('#slider_table #sequence #sequence_status');
+                    var elScore = $('#slider_table #sequence #sequence_score');
+                    var elInfos = $('#slider_table #sequence #sequence_infos');
+
+                    var nbActionsDone = parsed_data.result.nbActionsDone;
+                    var nbMimickingErrors = parsed_data.result.nbMimickingErrors;
+
+                    var score = (nbActionsDone - nbMimickingErrors) / nbActionsDone;
+
+                    elScore.text('' + (Math.floor(score * 10000) / 100).toFixed(2) + '%');
+                    elInfos.text('' + nbActionsDone + ' frames - ' + nbMimickingErrors + ' errors');
+
+                    $('#slider_table #sequence #sequence_progress').hide();
+
+                    if (score >= 0.8)
+                    {
+                        elStatus.text('Success');
+                        elStatus.removeClass('failed');
+                        elStatus.addClass('success');
+
+                        elScore.removeClass('failed');
+                        elScore.addClass('success');
+                    }
+                    else
+                    {
+                        elStatus.text('Task failed');
+                        elStatus.removeClass('success');
+                        elStatus.addClass('failed');
+
+                        elScore.removeClass('success');
+                        elScore.addClass('failed');
+                    }
+
+                    if (parsed_data.obsolete)
+                        $('#slider_table #sequence #sequence_obsolete').show();
+
+                    elScore.show();
+                    elInfos.show();
+                    elStatus.show();
+
+                    getRecordedData();
+                }
+            )
+            .error(function() {
+                        $('#slider_table #sequence #sequence_error').text('An error occurred. Please try again in a few minutes.');
+
+                        $('#slider_table #sequence #recorded_data_progress').hide();
+                        $('#slider_table #sequence #sequence_progress').hide();
+                        $('#slider_table #sequence #sequence_error').show();
+                    }
+            );
+    }
+
+
+    function getRecordedData(start_frame, clue)
+    {
+        function _imageForAction(action)
+        {
+            if (action == 0)
+                return '/images/action_forward.png';
+            else if (action == 1)
+                return '/images/action_backward.png';
+            else if (action == 2)
+                return '/images/action_left.png';
+            else
+                return '/images/action_right.png';
+        }
+
+
+        function _addCellForContent(parent_row, content)
+        {
+            var cell = document.createElement('td');
+            cell.appendChild(content);
+            parent_row.appendChild(cell);
+        }
+
+        retrieving_frames = true;
+
+        kill_timeouts();
+        
+        {% if not tutorial_mode %}
+        var url = "/factory/recorded_data/" + current_task + "/" + current_sequence + "/";
+        {% else %}
+        var url = "/factory/recorded_data_tutorial/" + 1 + "/" + 94 + "/";
+        heuristic = 83; //adding some random number
+        {% endif %}
+
+        //var url = "/factory/recorded_data/" + current_task + "/" + current_sequence + "/";
+
+        if (start_frame !== undefined)
+            url += start_frame + '/';
+
+        var params = {};
+        if (clue !== undefined)
+            params['clue'] = clue;
+
+        if (actions === null)
+            params['actions'] = 1;
+
+        {% if tutorial_mode %}
+          if(p_get_record_data == 1)
+          {
+              var date = new Date();
+              var curDate = null;
+              do { curDate = new Date();}
+              while(curDate-date < 2000);
+              p_get_record_data = 2; //frame 0
+          }
+          else if(p_get_record_data == 2)
+              p_get_record_data = 3; //frame 1
+          else if(p_get_record_data == 3)
+              p_get_record_data = 4; //frame 2
+          else if(p_get_record_data == 4)
+              p_get_record_data = 5; //frame 3
+
+            params['tutorial'] = p_get_record_data;
+
+        {% endif %}
+
+        $.post(url, params,
+                function(data) {
+                    if (must_cancel)
+                    {
+                        retrieving_frames = false;
+                        return;
+                    }
+
+                    var parsed_data = JSON.parse(data);
+
+                    if ((actions === null) && parsed_data.hasOwnProperty('actions'))
+                        actions = parsed_data.actions;
+
+                    process_menu_status(parsed_data.menu_status);
+
+                    if (parsed_data.status == 'none')
+                    {
+                        $('#slider_table #sequence #recorded_data_progress').hide();
+                        $('#slider_table #sequence #heuristic_selection_box').show();
+
+                        retrieving_frames = false;
+                    }
+                    else if (parsed_data.status == 'error')
+                    {
+                        $('#slider_table #sequence #recorded_data_progress').hide();
+                        $('#slider_table #sequence #heuristic_selection_box').show();
+
+                        $('#slider_table #sequence #sequence_error').text('An error occurred: "' + parsed_data.error + '". Please try again in a few minutes.');
+                        $('#slider_table #sequence #sequence_error').show();
+
+                        retrieving_frames = false;
+                    }
+                    else if (parsed_data.status == 'other')
+                    {
+                        $('#slider_table #sequence #recorded_data_progress').hide();
+
+                        $('#slider_table #sequence #sequence_error').text('You already have a data logging session running for task #' +
+                                                                          parsed_data.task + ', sequence #' + parsed_data.sequence +
+                                                                          '. Please wait for its completion before starting another one.');
+                        $('#slider_table #sequence #sequence_error').show();
+
+                        retrieving_frames = false;
+                    }
+                    else if (parsed_data.status == 'done')
+                    {
+                        if (max_frame === undefined)
+                        {
+                            var list_heuristics = $('#slider_table #sequence #heuristic_list')[0];
+
+                            for (var i = 0; i < list_heuristics.length; ++i)
+                            {
+                                if (list_heuristics.options[i].value == parsed_data.heuristic_version_id)
+                                {
+                                    list_heuristics.selectedIndex = i;
+                                    continue;
+                                }
+                            }
+
+                            $('#slider_table #sequence #heuristic_selection_box').show();
+
+                            element = $('#slider_table #sequence #sequence_heuristic');
+                            element.text("Data logged by heuristic '" + parsed_data.heuristic_name + "':");
+                            element.show();
+
+                            if (parsed_data.obsolete)
+                                $('#slider_table #sequence #recorded_data_obsolete').show();
+                        }
+
+                        var target = $('#slider_table #sequence #recorded_data_progress')[0];
+
+                        for (var i = 0; i < parsed_data.frames.length; ++i)
+                        {
+                            if (max_frame === undefined)
+                                max_frame = parsed_data.frames[i].index + 20;
+
+                            var frame_container = document.createElement('div');
+                            frame_container.setAttribute('id', 'frame_container_' + parsed_data.frames[i].index);
+                            frame_container.setAttribute('class', 'frame_container');
+
+                            var title_container_table = document.createElement('table');
+                            title_container_table.setAttribute('id', 'title_container_' + parsed_data.frames[i].index);
+                            title_container_table.setAttribute('class', 'title_container');
+
+                            var title_container_row = document.createElement('tr');
+
+                            var title = document.createElement('span');
+                            title.innerHTML = 'Frame #' + parsed_data.frames[i].index;
+
+                            var teacher_action = null;
+                            var performed_action_text = null;
+                            var performed_action = null;
+
+                            if (actions !== null)
+                            {
+                                var result_img = document.createElement('img');
+                                result_img.setAttribute('class', 'result');
+
+                                if (actions[parsed_data.frames[i].index][0] == actions[parsed_data.frames[i].index][1])
+                                {
+                                    title.setAttribute('class', 'frame_title success');
+                                    result_img.src = '/images/success.png';
+                                }
+                                else
+                                {
+                                    title.setAttribute('class', 'frame_title failed');
+                                    result_img.src = '/images/failure.png';
+                                }
+
+                                _addCellForContent(title_container_row, result_img);
+
+                                teacher_action = document.createElement('img');
+                                teacher_action.setAttribute('class', 'teacher_action');
+                                teacher_action.src = _imageForAction(actions[parsed_data.frames[i].index][1]);
+
+                                if (actions[parsed_data.frames[i].index][0] != actions[parsed_data.frames[i].index][1])
+                                {
+                                    performed_action_text = document.createElement('span');
+                                    performed_action_text.setAttribute('class', 'performed_action');
+                                    performed_action_text.innerHTML = 'Performed: ';
+
+                                    performed_action = document.createElement('img');
+                                    performed_action.setAttribute('class', 'performed_action');
+                                    performed_action.src = _imageForAction(actions[parsed_data.frames[i].index][0]);
+                                }
+                            }
+                            else
+                            {
+                                title.setAttribute('class', 'frame_title');
+                            }
+
+                            _addCellForContent(title_container_row, title);
+
+                            if (teacher_action !== null)
+                                _addCellForContent(title_container_row, teacher_action);
+
+                            if (performed_action !== null)
+                            {
+                                _addCellForContent(title_container_row, performed_action_text);
+                                _addCellForContent(title_container_row, performed_action);
+                            }
+
+                            title_container_table.appendChild(title_container_row);
+                            frame_container.appendChild(title_container_table);
+
+                            var table = document.createElement('table');
+                            table.setAttribute('class', 'table_container');
+
+                            var row = document.createElement('tr');
+
+                            var left_container = document.createElement('td');
+                            left_container.setAttribute('class', 'left_container');
+
+                            var src_image = document.createElement('canvas');
+                            src_image.setAttribute('width', parsed_data.frames[i].src_image.width);
+                            src_image.setAttribute('height', parsed_data.frames[i].src_image.height);
+                            src_image.setAttribute('title', 'Image given to the heuristic');
+                            src_image.setAttribute('class', 'frame_src_image');
+
+                            setRGBPixels(src_image, parsed_data.frames[i].src_image.pixels);
+
+                            left_container.appendChild(src_image);
+
+                            row.appendChild(left_container);
+
+                            var right_container = document.createElement('td');
+                            right_container.setAttribute('class', 'right_container');
+
+                            var cumulated_width = 0;
+
+                            for (var j = 0; j < parsed_data.frames[i].user_data.length; ++j)
+                            {
+                                if (parsed_data.frames[i].user_data[j].type == 'text')
+                                {
+                                    var converted_text = parsed_data.frames[i].user_data[j].text;
+
+                                    if (converted_text[converted_text.length-1] == '\n')
+                                        converted_text = converted_text.substr(0, converted_text.length-1);
+
+                                    if (converted_text.length == 0)
+                                        converted_text = ' ';
+
+                                    var text = document.createElement('span');
+                                    text.setAttribute('class', 'frame_text');
+                                    text.innerHTML = converted_text;
+
+                                    right_container.appendChild(text);
+
+                                    cumulated_width = 0;
+                                }
+                                else if (parsed_data.frames[i].user_data[j].type == 'rgb')
+                                {
+                                    if (cumulated_width + parsed_data.frames[i].user_data[j].width + 5 >= 664)
+                                    {
+                                        var separator = document.createElement('br');
+                                        right_container.appendChild(separator);
+                                        cumulated_width = 0;
+                                    }
+
+                                    var image = document.createElement('canvas');
+                                    image.setAttribute('class', 'frame_image');
+                                    image.setAttribute('width', parsed_data.frames[i].user_data[j].width);
+                                    image.setAttribute('height', parsed_data.frames[i].user_data[j].height);
+
+                                    setRGBPixels(image, parsed_data.frames[i].user_data[j].pixels);
+
+                                    right_container.appendChild(image);
+
+                                    cumulated_width += parsed_data.frames[i].user_data[j].width + 5;
+                                }
+                                else if (parsed_data.frames[i].user_data[j].type == 'gray')
+                                {
+                                    var image = document.createElement('canvas');
+                                    image.setAttribute('class', 'frame_image');
+                                    image.setAttribute('width', parsed_data.frames[i].user_data[j].width);
+                                    image.setAttribute('height', parsed_data.frames[i].user_data[j].height);
+
+                                    setGrayPixels(image, parsed_data.frames[i].user_data[j].pixels);
+
+                                    right_container.appendChild(image);
+                                }
+                            }
+
+                            row.appendChild(right_container);
+
+                            table.appendChild(row);
+
+                            frame_container.appendChild(table);
+
+                            $('#slider_table #sequence .container')[0].insertBefore(frame_container, target);
+                        }
+
+
+                        var last_received_frame = parsed_data.frames[parsed_data.frames.length - 1].index;
+
+                        if (!parsed_data.eof && ((max_frame == -1) || (last_received_frame < max_frame)))
+                        {
+                            getRecordedData(last_received_frame + 1, parsed_data.clue);
+                        }
+                        else
+                        {
+                            $('#slider_table #sequence #recorded_data_progress').hide();
+
+                            if (!parsed_data.eof)
+                            {
+                                $('#slider_table #sequence #sequence_view_more').unbind('click');
+                                $('#slider_table #sequence #sequence_view_more').click(function() {
+                                        if (retrieving_frames)
+                                            return false;
+
+                                        $('#slider_table #sequence #recorded_data_progress').show();
+                                        $('#slider_table #sequence #sequence_view_more').hide();
+                                        $('#slider_table #sequence #sequence_view_all').hide();
+
+                                        max_frame = max_frame + 20;
+                                        getRecordedData(last_received_frame + 1, parsed_data.clue);
+
+                                        return false;
+                                    });
+
+                                $('#slider_table #sequence #sequence_view_all').unbind('click');
+                                $('#slider_table #sequence #sequence_view_all').click(function() {
+                                        if (retrieving_frames)
+                                            return false;
+
+                                        $('#slider_table #sequence #recorded_data_progress').show();
+                                        $('#slider_table #sequence #sequence_view_more').hide();
+                                        $('#slider_table #sequence #sequence_view_all').hide();
+
+                                        max_frame = -1;
+                                        getRecordedData(last_received_frame + 1, parsed_data.clue);
+
+                                        return false;
+                                    });
+
+                                $('#slider_table #sequence #sequence_view_more').show();
+                                $('#slider_table #sequence #sequence_view_all').show();
+                            }
+
+                            retrieving_frames = false;
+                        }
+                    }
+                    else
+                    {
+                        if (start_frame !== undefined)
+                            add_timeout("getRecordedData(" + start_frame + ")", 5000);
+                        else
+                            add_timeout("getRecordedData()", 5000);
+
+                        retrieving_frames = false;
+                    }
+                }
+            )
+            .error(function() {
+                        $('#slider_table #sequence #sequence_error').text('An error occurred. Please try again in a few minutes.');
+
+                        $('#slider_table #sequence #recorded_data_progress').hide();
+                        $('#slider_table #sequence #sequence_error').show();
+                    }
+            );
+    }
+
+
+    function record_data()
+    {
+        must_cancel = true;
+
+        kill_timeouts();
+
+        var list_heuristics = $('#slider_table #sequence #heuristic_list')[0];
+        var heuristic = list_heuristics.options[list_heuristics.selectedIndex].value;
+
+        $('#slider_table #sequence #recorded_data_progress').show();
+        $('#slider_table #sequence #recorded_data_obsolete').hide();
+        $('#slider_table #sequence #heuristic_selection_box').hide();
+        $('#slider_table #sequence #sequence_heuristic').hide();
+        $('#slider_table #sequence #sequence_obsolete').hide();
+        $('#slider_table #sequence #sequence_error').hide();
+        $('#slider_table #sequence #sequence_view_more').hide();
+        $('#slider_table #sequence #sequence_view_all').hide();
+
+        $('#slider_table #sequence .frame_container').remove();
+
+        $('#last_recorded_data_link').show();
+
+        max_frame = undefined;
+
+        {% if not tutorial_mode %}
+        var url = "/factory/record_data/"
+        {% else %}
+        var url = "/factory/record_data_tutorial/"
+        heuristic = 83; //adding some random number
+        {% endif %}
+
+        $.post(url + current_task + "/" + current_sequence + "/" + heuristic + "/", { {% if tutorial_mode %}tutorial_step:p_get_record_data,{% endif %} },
+                function(data) {
+                    must_cancel = false;
+                    process_menu_status(JSON.parse(data));
+                    getRecordedData();
+                }
+            )
+            .error(function() {
+                        must_cancel = false;
+
+                        $('#slider_table #sequence #sequence_error').text('An error occurred. Please try again in a few minutes.');
+
+                        $('#slider_table #sequence #recorded_data_progress').hide();
+                        $('#slider_table #sequence #heuristic_selection_box').show();
+                        $('#slider_table #sequence #sequence_error').show();
+                    }
+            );
+    }
+
+</script>

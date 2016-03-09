@@ -1,0 +1,59 @@
+{% load assign %}
+
+{% for heuristic in heuristics %}
+
+    {% assign rowclass "" %}
+    {% assign title1 "" %}
+    {% assign title2 "" %}
+    {% assign title3 "" %}
+    
+    {% if not heuristic.latest_private_version.checked %}
+        {% if heuristic.latest_private_version.test_status.error %}
+            {% assign rowclass "error" %}
+            {% assign title1 "The heuristic '" %}
+            {% assign title2 heuristic.latest_private_version.fullname %}
+            {% assign title3 "' didn't pass the tests" %}
+        {% else %}
+            {% assign rowclass "notchecked" %}
+            {% assign title1 "The heuristic '" %}
+            {% assign title2 heuristic.latest_private_version.fullname %}
+            {% assign title3 "' isn't checked yet" %}
+        {% endif %}
+    {% else %}
+        {% ifequal heuristic.latest_private_version.status 'DIS' %}
+            {% assign rowclass "error" %}
+            {% assign title1 "The heuristic '" %}
+            {% assign title2 heuristic.latest_private_version.fullname %}
+            {% assign title3 "' has been disabled, due to an error" %}
+        {% endifequal %}
+    {% endif %}
+
+
+    <tr class="{% cycle 'row1' 'row2' %} {{ rowclass }}" title="{{ title1 }}{{ title2 }}{{ title3 }}">
+        <td class="name"><a href="/heuristics/v{{ heuristic.latest_private_version.id }}">{{ heuristic.latest_private_version.shortname }}</a></td>
+        <td class="rank">{% if heuristic.latest_private_version.rank %}{{ heuristic.latest_private_version.rank }}{% else %}-{% endif %}</td>
+        <td class="versions">{{ heuristic.visible_versions_count }}</td>
+        <td class="description">{% if heuristic.short_description %}{{ heuristic.short_description }}{% else %}&nbsp;{% endif %}</td>
+        <td class="date">{{ heuristic.latest_private_version.upload_date|date:"N j, Y, P" }}</td>
+
+        {% if mode.can_display_tools %}
+            <td class="tools {% if heuristic.latest_public_version %}{% if heuristic.can_be_published %}tools5{% else %}tools3{%endif%}{% else %}{% if heuristic.can_be_published %}tools4{% else %}tools2{%endif%}{%endif%}">
+            	{% if heuristic.latest_public_version %}
+		            {% if heuristic.post %}
+		                <span class="tool"><a class="forum" title="Talk about this heuristic on the forum" href="/heuristics/topic/{{ heuristic.id }}/"></a></span>
+		            {% else %}
+		                <span class="tool"><a class="forum_no_comment" title="Talk about this heuristic on the forum (no comment yet)" href="/heuristics/topic/{{ heuristic.id }}/"></a></span>
+		            {% endif %}
+                {% endif %}
+
+                {% if heuristic.can_be_published %}
+        	        <span class="tool"><a class="delete" title="Delete the latest version of the heuristic" href="/heuristics/delete/{{ heuristic.latest_private_version.id }}/" onclick="return confirm_heuristic_deletion(this);"></a></span>
+                    <span class="tool"><a class="publish" title="Publish the latest version of the heuristic" href="/heuristics/publish/{{ heuristic.latest_private_version.id }}/" onclick="return choose_heuristic_publication_delay(this);"></a></span>
+                {% endif %}
+                
+                <span class="tool"><a class="upgrade" title="Upload a new version of the heuristic" href="/heuristics/{{ heuristic.id }}/?upload=1"></a></span>
+                <span class="first_tool"><a class="edit" title="Edit the details of this heuristic" href="/heuristics/edit/{{ heuristic.id }}/"></a></span>
+            </td>
+        {% endif %}
+    </tr>
+{% endfor %}

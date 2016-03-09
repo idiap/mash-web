@@ -1,0 +1,50 @@
+<div class="report_box">
+    {% if display_title %}
+        {% if title_link %}
+            <p class="name"><a href="{{ title_link }}" class="{{ title_class }}">{{ report.title }}</a></p>
+        {% else %}
+            <p class="name {{ title_class }}">{{ report }}</p>
+        {% endif %}
+    {% endif %}
+
+    {% if experiment_text or experiment_link %}
+        <div class="section">
+            <p class="title">Experiment</p>
+            {% if experiment_link and experiment_name %}
+                <p>This error happened during the experiment <a href="{{ experiment_link }}" class="{{ title_class }}">{{ experiment_name }}</a></p>
+            {% else %}
+                <p>{{ experiment_text }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="section">
+        <p class="title">Problem description</p>
+        <p>{{ report.problemDescription }}</p>
+    </div>
+    
+    {% if report.context %}
+        <div class="section">
+            <p class="title">Context</p>
+            <pre>{{ report.context }}</pre>
+        </div>
+    {% endif %}
+
+    {% if report.splitStacktrace %}
+        <div class="section">
+            <p class="title">Stacktrace</p>
+            {% for part in report.splitStacktrace %}
+                {% ifequal part.0 "frame" %}
+                    {% if not forloop.first %}
+                        </div>
+                    {% endif %}
+                    <a href="#" class="frame_header"><pre class="{{ part.0 }}">- {{ part.1 }}</pre></a>
+                    <div>
+                {% else %}
+                    <pre class="{{ part.0 }}">{{ part.1 }}</pre>
+                {% endifequal %}
+            {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>

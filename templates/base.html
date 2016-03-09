@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/menu.css" />
+    <link rel="icon" type="image/png" href="/images/mash-favicon.png" />
+    {% block stylesheets %}{% endblock %}
+    {% block scripts %}{% endblock %}
+    <title>{% block title %}MASH{% endblock %}</title>
+</head>
+
+<body>
+    <div id="topbar">
+        {% block topbar %}
+
+            {% block logo %}
+            <a href="/"><img id="mash_logo" alt="MASH logo" src="/images/logo-mash-2.png" /></a>
+            <a href="/"><img id="mash_logo_text" alt="MASH logo" src="/images/logo-mash-text-2.png" /></a>
+            {% endblock logo %}
+
+            {% block menubar %}
+            {% load menubuilder %}
+            <div id="login_infos">{% login_infos %}</div>
+            <div id="menu">{% menu %}</div>
+            {% endblock menubar %}
+        
+        {% endblock topbar %}
+    </div>
+
+    {% block warnings %}
+		<noscript>
+			<div id="warnings">
+		    	<p>JavaScript is required to use this site! Please activate it in your browser settings.</p>
+		    </div>
+		</noscript>
+	{% endblock %}
+
+    <div id="mash-content" class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

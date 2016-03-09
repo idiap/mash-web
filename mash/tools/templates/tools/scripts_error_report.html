@@ -1,0 +1,21 @@
+<script type="text/javascript">
+    function setupStackTraces()
+    {
+    	$('.section .frame_header').click(function() {
+    		var frameElement = $(this).children('.frame');
+    		
+    		var text = frameElement.text();
+    		if (text[0] == '+')
+    		{
+    		    frameElement.text('-' + text.substr(1));
+    		}
+    		else
+    		{
+    		    frameElement.text('+' + text.substr(1));
+    		}
+    		
+    		$(this).next().slideToggle('slow');
+    		return false;
+    	}); //.next().hide();
+    }
+</script>

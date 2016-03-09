@@ -1,0 +1,109 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the 'heuristics tools'
+*
+*******************************************************************************/
+
+div.tools
+{
+    height: 18px;
+    margin-top: 5px;
+    width: 100%;
+}
+
+
+td.tools
+{
+    height: 16px;
+    text-align: center;
+}
+
+
+td.tools2
+{
+    width: 36px;
+}
+
+
+td.tools3
+{
+    width: 56px;
+}
+
+
+td.tools4
+{
+    width: 76px;
+}
+
+
+td.tools5
+{
+    width: 96px;
+}
+
+
+#heuristic_infos_box .tools span.tool
+{
+    float: right;
+    position: relative;
+    top: -20px;
+    padding-left: 4px;
+}
+
+
+td.tools span.first_tool
+{
+    float: right;
+}
+
+
+td.tools span.tool
+{
+    float: right;
+    padding-left: 4px;
+}
+
+
+.tools a
+{
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+
+.tools a.edit
+{
+    background-image: url(/images/heuristic_edit.png);
+}
+
+
+.tools a.upgrade
+{
+    background-image: url(/images/heuristic_upgrade.png);
+}
+
+
+.tools a.publish
+{
+    background-image: url(/images/heuristic_publish.png);
+}
+
+
+.tools a.delete
+{
+    background-image: url(/images/heuristic_delete.png);
+}
+
+
+.tools a.forum
+{
+    background-image: url(/images/heuristic_forum.png);
+}
+
+
+.tools a.forum_no_comment
+{
+    background-image: url(/images/heuristic_forum_no_comment.png);
+}

@@ -1,0 +1,21 @@
+﻿{% extends "heuristics/base_heuristics_aligned.html" %}
+
+{% block title %}{{ block.super }} - Heuristics diff{% endblock %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/diff.css" />
+{% endblock stylesheets %}
+
+
+{% block content %}
+
+    <div id="diff">
+        <div class="title"><a href="/heuristics/v{{ old_heuristic_version.id }}">{{ old_heuristic_version.fullname }}</a> <span>→</span> <a href="/heuristics/v{{ new_heuristic_version.id }}">{{ new_heuristic_version.fullname }}</a></div>
+
+        <div class="code">{{ diff_table|safe }}</div>
+    
+    </div>
+
+{% endblock content %}

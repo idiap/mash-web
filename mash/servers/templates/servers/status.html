@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}{{ block.super }} - Servers{% endblock %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/servers_list.css" />
+    <link href="/css/jquery.alerts.css" rel="stylesheet" type="text/css" media="screen" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+
+    {{ block.super }}
+
+    <script type="text/javascript" src="/js/ajax.js"></script>
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui.js"></script>
+    <script type="text/javascript" src="/js/jquery.alerts.js"></script>
+
+    <script type="text/javascript">
+
+        // Declarations
+        var xmlhttp_serversStatus = null;
+        var xmlhttp_serverIdentification = null;
+
+
+        //------------------------------------------------------------------------------------------
+        // Called when the status of some servers is received
+        //------------------------------------------------------------------------------------------
+        function serversStatusUpdate()
+        {
+            if (xmlhttp_serversStatus.readyState == 4)
+            {
+                // Retrieve the XML document containing the status
+                var xmlDoc = xmlhttp_serversStatus.responseXML.documentElement;
+            
+                // Process each server information contained in the status report
+                var serverElements = xmlDoc.getElementsByTagName("server");
+                for (var i = 0; i < serverElements.length; ++i)
+                {
+                    // Retrieve the infos about the server
+                    var id      = serverElements[i].getElementsByTagName("id")[0].firstChild.nodeValue;
+                    var status  = serverElements[i].getElementsByTagName("status")[0].firstChild.nodeValue;
+
+                    // Retrieve the HTML elements that we must modify
+                    var elImage = document.getElementById("online_"  + id);
+                    var elToolsParent = document.getElementById("tools_"  + id);
+                    var elTools = null;
+                    if (elToolsParent != null)
+                    {
+                        elTools = elToolsParent.getElementsByTagName("span");
+                    }
+
+                    if (status == 'online')
+                    {
+                        elImage.src = '/images/server_online.gif';
+
+                        if (elTools != null)
+                        {
+                            for (var j = 0; j < elTools.length; ++j)
+                            {
+                                elTools[j].className = "tool";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        elImage.src = '/images/server_offline.gif';
+                    }
+                }
+            
+                if (serverElements.length < {{ nb_servers }})
+                {
+                    setTimeout("getServersStatus()", 5000);
+                }
+            }
+        }
+    
+
+        //------------------------------------------------------------------------------------------
+        // Called when the identification of a server is received
+        //------------------------------------------------------------------------------------------
+        function serverIdentificationUpdate()
+        {
+            if (xmlhttp_serverIdentification.readyState == 4)
+            {
+                // Retrieve the type of server
+                var response = xmlhttp_serverIdentification.responseText.split(' ');
+
+                var serverID = response[0]
+                var serverType = response[1]
+                
+                if (serverType == "FAILED")
+                {
+                    jAlert('The identification of the server failed', 'ERROR'); 
+                    xmlhttp_serverIdentification = null;
+                }
+                else if (serverType == "Unidentified")
+                {
+                    xmlhttp_serverIdentification = null;
+                    setTimeout("identifyServer(" + serverID + ")", 3000);
+                }
+                else if (serverType == "Unknown")
+                {
+                    jAlert('The server wasn\'t identified as a known server type', 'Server not identified');
+                    xmlhttp_serverIdentification = null;
+                }
+                else
+                {
+                    xmlhttp_serverIdentification = null;
+                    jAlert('The server was identified as a \'' + serverType + '\'', 'Server identified', function(r) {
+                        window.location.reload();
+                    }); 
+                }
+            }
+        }
+
+
+        //------------------------------------------------------------------------------------------
+        // Asynchronously retrieve the status of the test of the heuristic (the function
+        // 'stateChanged' is called when the status is received)
+        //------------------------------------------------------------------------------------------
+        function getServersStatus()
+        {
+            xmlhttp_serversStatus = GetXmlHttpObject();
+            if (xmlhttp_serversStatus == null)
+            {
+                return;
+            }
+        
+            xmlhttp_serversStatus.onreadystatechange = serversStatusUpdate;
+            xmlhttp_serversStatus.open("GET", "/servers/status/", true);
+            xmlhttp_serversStatus.setRequestHeader('X_REQUESTED_WITH', 'XMLHttpRequest');
+            xmlhttp_serversStatus.send(null);
+        }
+
+
+        //------------------------------------------------------------------------------------------
+        // Asynchronously identify the type of a server
+        //------------------------------------------------------------------------------------------
+        function identifyServer(server)
+        {
+            if (xmlhttp_serverIdentification != null)
+            {
+                return;
+            }
+            
+            xmlhttp_serverIdentification = GetXmlHttpObject();
+            if (xmlhttp_serverIdentification == null)
+            {
+                return;
+            }
+        
+            xmlhttp_serverIdentification.onreadystatechange = serverIdentificationUpdate;
+            xmlhttp_serverIdentification.open("GET", "/servers/identification/" + server + "/", true);
+            xmlhttp_serverIdentification.setRequestHeader('X_REQUESTED_WITH', 'XMLHttpRequest');
+            xmlhttp_serverIdentification.send(null);
+        }
+    
+    </script>
+
+{% endblock scripts %}
+
+
+{% block content %}
+
+    <a class="add" href="/servers/add/">Add a new server</a>
+
+    <div id="compilation_servers" class="servers-list">
+        <h1>Compilation servers</h1>
+        {% if compilation_servers %}
+            <table>
+                <thead>
+                    <th>ONLINE</th>
+                    <th>NAME</th>
+                    <th>ADDRESS</th>
+                    <th>CURRENT JOB</th>
+                </thead>
+                <tbody>
+                    {% for server in compilation_servers  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="online_test"><img id="online_{{ server.id }}" src="/images/progress.gif" height="16px"></td>
+                            <td class="name">{{ server.name }}</td>
+                            <td class="address">{{ server.address }}:{{ server.port }}</td>
+                            <td class="status {% if server.current_job %}working">Checking heuristic <a href="/heuristics/v{{ server.current_job.heuristic_version.id }}">{{ server.current_job.heuristic_version.fullname }}</a>{% else %}ready">-{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="not-found">No Compilation server found!</p>
+        {% endif %}
+    </div>
+
+    <div id="debugging_servers" class="servers-list">
+        <h1>Debugging servers</h1>
+        {% if debugging_servers %}
+            <table>
+                <thead>
+                    <th>ONLINE</th>
+                    <th>NAME</th>
+                    <th>ADDRESS</th>
+                    <th>CURRENT JOB</th>
+                </thead>
+                <tbody>
+                    {% for server in debugging_servers  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="online_test"><img id="online_{{ server.id }}" src="/images/progress.gif" height="16px"></td>
+                            <td class="name">{{ server.name }}</td>
+                            <td class="address">{{ server.address }}:{{ server.port }}</td>
+                            <td class="status {% if server.current_job %}working">Debugging heuristic <a href="/heuristics/v{{ server.current_job.heuristic_version.id }}">{{ server.current_job.heuristic_version.fullname }}</a>{% else %}ready">-{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="not-found">No Debugging server found!</p>
+        {% endif %}
+    </div>
+
+    <div id="experiments_servers" class="servers-list">
+        <h1>Experiments servers</h1>
+        {% if experiments_servers %}
+            <table>
+                <thead>
+                    <th>ONLINE</th>
+                    <th>NAME</th>
+                    <th>ADDRESS</th>
+                    <th>CURRENT JOB</th>
+                </thead>
+                <tbody>
+                    {% for server in experiments_servers  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="online_test"><img id="online_{{ server.id }}" src="/images/progress.gif" height="16px"></td>
+                            <td class="name">{{ server.name }}</td>
+                            <td class="address">{{ server.address }}:{{ server.port }}</td>
+                            {% if server.current_job %}
+                                {% if server.current_job.heuristic_version.id %}
+                                    <td class="status working">Evaluating heuristic <a href="/heuristics/v{{ server.current_job.heuristic_version.id }}">{{ server.current_job.heuristic_version.fullname }}</a></td>
+                                {% else %}
+                                    <td class="status working">Running experiment <a href="/experiments/{{ server.current_job.experiment.id }}">{{ server.current_job.experiment.name }}</a></td>
+                                {% endif %}
+                            {% else %}
+                                <td class="status ready">-</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="not-found">No Experiments server found!</p>
+        {% endif %}
+    </div>
+
+    <div id="application_servers" class="servers-list">
+        <h1>Application servers</h1>
+        {% if application_servers %}
+            <table>
+                <thead>
+                    <th>ONLINE</th>
+                    <th>NAME</th>
+                    <th>ADDRESS</th>
+                    <th>SUBTYPE</th>
+                </thead>
+                <tbody>
+                    {% for server in application_servers  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="online_test"><img id="online_{{ server.id }}" src="/images/progress.gif" height="16px"></td>
+                            <td class="name">{{ server.name }}</td>
+                            <td class="address">{{ server.address }}:{{ server.port }}</td>
+                            <td class="subtype">
+                                {% ifequal server.subtype "IMAG" %}Images{% endifequal %}
+                                {% ifequal server.subtype "INTE" %}Interactive{% endifequal %}
+                                {% ifequal server.subtype "UNKN" %}Unknown{% endifequal %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="not-found">No Application server found!</p>
+        {% endif %}
+    </div>
+
+    <div id="clustering_servers" class="servers-list">
+        <h1>Clustering servers</h1>
+        {% if clustering_servers %}
+            <table>
+                <thead>
+                    <th>ONLINE</th>
+                    <th>NAME</th>
+                    <th>ADDRESS</th>
+                </thead>
+                <tbody>
+                    {% for server in clustering_servers  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="online_test"><img id="online_{{ server.id }}" src="/images/progress.gif" height="16px"></td>
+                            <td class="name">{{ server.name }}</td>
+                            <td class="address">{{ server.address }}:{{ server.port }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="not-found">No Clustering server found!</p>
+        {% endif %}
+    </div>
+
+    {% if unknown_servers or unidentified_servers %}
+        <div id="unknown_servers" class="servers-list">
+            <h1>Unknown servers</h1>
+            <table cellspacing="1">
+                <thead>
+                    <tr>
+                        <th>ONLINE</th>
+                        <th>NAME</th>
+                        <th>ADDRESS</th>
+                        <th>TOOLS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for server in unknown_servers %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="online_test"><img id="online_{{ server.id }}" src="/images/progress.gif" height="16px"></img></td>
+                            <td class="name">{{ server.name }}</td>
+                            <td class="address">{{ server.address }}:{{ server.port }}</td>
+                            <td class="tools" id="tools_{{ server.id }}">
+                                <span class="tool hidden"><a class="identify" title="Contact the server to determine its type" href="#" onclick="identifyServer({{ server.id }}); return false;"></a></span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+
+                    {% for server in unidentified_servers %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="online_test"><img id="online_{{ server.id }}" src="/images/progress.gif" height="16px"></img></td>
+                            <td class="name">{{ server.name }}</td>
+                            <td class="address">{{ server.address }}:{{ server.port }}</td>
+                            <td class="tools" id="tools_{{ server.id }}">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <div id="tools">
+        <h1>Tools</h1>
+        <p>Warning: Don't click on those links if you don't know what you are doing!</p>
+        <ul>
+            <li><a href="/servers/execute/SCHEDULE_PUBLIC_EXPERIMENTS/">SCHEDULE_PUBLIC_EXPERIMENTS</a></li>
+            <li><a href="/servers/execute/RANK_EVALUATED_HEURISTICS/">RANK_EVALUATED_HEURISTICS</a></li>
+            <li><a href="/servers/execute/EVALUATE_ALL_HEURISTICS/">EVALUATE_ALL_HEURISTICS</a></li>
+        </ul>
+    </div>
+
+    <script type="text/javascript">
+        getServersStatus();
+    </script>
+
+{% endblock content %}
+

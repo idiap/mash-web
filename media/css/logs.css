@@ -1,0 +1,13 @@
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+}
+
+
+pre.log
+{
+    background-color: #DDDDDD;
+    padding: 10px;
+}

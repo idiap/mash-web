@@ -1,0 +1,143 @@
+#registration_form
+{
+    margin-top: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 50px;
+    width: 600px;
+    padding: 10px;
+    color: #000000;
+    font-family: Arial;
+    font-size: 14px;
+    background-color: #EFF0EF;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+#registration_form p.registration_form_title
+{
+    margin-top: 0;
+    margin-bottom: 5px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+#registration_form fieldset
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0px;
+}
+
+
+#registration_form dl
+{
+    margin-top: 16px;
+    margin-bottom: 0px;
+}
+
+
+#registration_form dl.no_affiliation
+{
+    margin-top: 4px;
+}
+
+
+#registration_form dt
+{
+    display: block;
+    float: left;
+    width: 9em;
+}
+
+
+#registration_form dd
+{
+    margin-left: 9em;
+}
+
+
+#registration_form dd.full
+{
+    margin-left: 0;
+}
+
+
+#registration_form dd a.right
+{
+    float: right;
+}
+
+
+#registration_form dd input
+{
+    width: 99%;
+    border: 1px solid #000000;
+}
+
+
+#registration_form dd.no_affiliation input,
+#registration_form dd input#id_terms_accepted
+{
+    width: auto;
+    margin-left: 0;
+}
+
+
+#registration_form iframe
+{
+    border: 1px solid #000000;
+    margin-top: 6px;
+}
+
+
+#registration_form input.button
+{
+    width: 80px;
+    height: 20px;
+    background-color: #EFF0EF;
+    background-image:url(/images/bg_button.gif);
+    font-weight: bold;
+    border: 1px solid #B0B0B0;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0;
+    margin-top: 10px;
+}
+
+
+#registration_form span.infos
+{
+    font-size: 11px;
+    font-style: italic;
+}
+
+
+#registration_form ul.errorlist
+{
+    color: #FF0000;
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+    text-align: left;
+    padding: 0;
+}
+
+
+#registration_form p.text
+{
+    padding: 10px;
+    margin: 0;
+}
+
+
+#registration_form p.disclaimer
+{
+    margin-bottom: 20px;
+    margin-top: 20px;
+}

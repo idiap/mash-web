@@ -1,0 +1,199 @@
+<script type="text/javascript" charset="utf-8">
+    {% if tutorial_mode %}
+    var p_get_results = 0;
+    {% endif %}
+
+    var no_slide = false;
+    var task_results_state = new Array();
+
+    for (var i = 0; i < {{ factoryTasks|length }}; ++i)
+        task_results_state.push(null);
+
+
+    function selectTask(number)
+    {
+        kill_timeouts();
+
+        if (!no_slide)
+        {
+            $('#slider_table #details .container').show();
+            getTaskDetails(number, true);
+            $('#slider_table').animate({ marginLeft: "-=864px", }, 1000 );
+        }
+    }
+
+
+    function run_single_test(task_number)
+    {
+        kill_timeouts();
+
+        no_slide = true;
+
+        task_results_state[task_number - 1] = null;
+
+        $("#slider_table #tasks #test_button_" + task_number).hide();
+        $("#slider_table #tasks #test_obsolete_" + task_number).hide();
+        $("#slider_table #tasks #test_score_" + task_number).hide();
+        $("#slider_table #tasks #test_result_" + task_number).hide();
+        $("#slider_table #tasks #test_progress_" + task_number).show();
+
+        $("#slider_table #tasks #test_result_" + task_number).removeClass('green');
+        $("#slider_table #tasks #test_result_" + task_number).removeClass('red');
+
+        $("#slider_table #tasks #test_score_" + task_number).removeClass('green');
+        $("#slider_table #tasks #test_score_" + task_number).removeClass('red');
+
+        $('#last_recorded_data_link').hide();
+
+        $.post("/factory/test/" + task_number + "/", {},
+                function(data) {
+                    process_menu_status(JSON.parse(data));
+                    getTestResults();
+                    no_slide = false;
+                }
+        ).error(function() {
+                $("#slider_table #tasks #test_result_" + task_number).text('ERROR');
+                $("#slider_table #tasks #test_result_" + task_number).addClass('red');
+                $("#slider_table #tasks #test_result_" + task_number).show();
+                $("#slider_table #tasks #test_progress_" + task_number).hide();
+            }
+        );
+
+        return false;
+    }
+
+
+    function getTestResults()
+    {
+        for (var i = 0; i < {{ factoryTasks|length }}; ++i)
+        {
+            if (task_results_state[i] == null)
+            {
+                $("#slider_table #tasks #test_button_" + (i + 1)).hide();
+                $("#slider_table #tasks #test_obsolete_" + (i + 1)).hide();
+                $("#slider_table #tasks #test_score_" + (i + 1)).hide();
+                $("#slider_table #tasks #test_result_" + (i + 1)).hide();
+                $("#slider_table #tasks #test_progress_" + (i + 1)).show();
+
+                $("#slider_table #tasks #test_result_" + (i + 1)).removeClass('green');
+                $("#slider_table #tasks #test_result_" + (i + 1)).removeClass('red');
+
+                $("#slider_table #tasks #test_score_" + (i + 1)).removeClass('green');
+                $("#slider_table #tasks #test_score_" + (i + 1)).removeClass('red');
+            }
+        }
+       
+        {% if not tutorial_mode %}
+        var url = "/factory/test_results/"
+        {% else %}
+        var url = "/factory/test_results_tutorial/"
+        {% endif %}
+
+        $.post(url, { {% if tutorial_mode %}tutorial_step:p_get_results,{% endif %}}, function(data) {
+                var parsed_data = JSON.parse(data);
+
+                var nb_done = 0;
+
+                process_menu_status(parsed_data.menu_status);
+
+                for (var i = 0; i < parsed_data.results.length; ++i)
+                {
+                    if (parsed_data.results[i].status == task_results_state[i])
+                    {
+                        if (parsed_data.results[i].status == 'done')
+                            nb_done++;
+                        continue;
+                    }
+                    
+                    if (parsed_data.results[i].status == 'none')
+                    {
+                        $("#slider_table #tasks #test_progress_" + (i + 1)).hide();
+                        nb_done++;
+                        if (parsed_data.can_run_test)
+                            $("#slider_table #tasks #test_button_" + (i + 1)).show();
+
+                    }
+                    else if (parsed_data.results[i].status == 'scheduled')
+                    {
+                        $("#slider_table #tasks #test_result_" + (i + 1)).text('Scheduled');
+                        $("#slider_table #tasks #test_result_" + (i + 1)).show();
+                    }
+                    else if (parsed_data.results[i].status == 'running')
+                    {
+                        $("#slider_table #tasks #test_result_" + (i + 1)).text('In progress');
+                        $("#slider_table #tasks #test_result_" + (i + 1)).show();
+                    }
+                    else if (parsed_data.results[i].status == 'failed')
+                    {
+                        $("#slider_table #tasks #test_result_" + (i + 1)).text('ERROR');
+                        $("#slider_table #tasks #test_result_" + (i + 1)).addClass('red');
+                        $("#slider_table #tasks #test_result_" + (i + 1)).show();
+                        $("#slider_table #tasks #test_progress_" + (i + 1)).hide();
+                        nb_done++;
+                    }
+                    else if (parsed_data.results[i].status == 'done_errors')
+                    {
+                        $("#slider_table #tasks #test_result_" + (i + 1)).text('ERROR');
+                        $("#slider_table #tasks #test_result_" + (i + 1)).addClass('red');
+                        $("#slider_table #tasks #test_result_" + (i + 1)).show();
+                        $("#slider_table #tasks #test_progress_" + (i + 1)).hide();
+                        nb_done++;
+                    }
+                    else
+                    {
+                        nb_done++;
+                
+                        $("#slider_table #tasks #test_button_" + (i + 1)).show();
+                        $("#slider_table #tasks #test_score_" + (i + 1)).show();
+                        $("#slider_table #tasks #test_result_" + (i + 1)).show();
+                        $("#slider_table #tasks #test_progress_" + (i + 1)).hide();
+                
+                        $("#slider_table #tasks #test_score_" + (i + 1)).text('' + parsed_data.results[i].score.toFixed(2) + '%');
+                
+                        if (parsed_data.results[i].score > 75.0)
+                        {
+                            $("#slider_table #tasks #test_result_" + (i + 1)).text('Passed');
+                            $("#slider_table #tasks #test_result_" + (i + 1)).addClass('green');
+                            $("#slider_table #tasks #test_score_" + (i + 1)).addClass('green');
+                
+                        }
+                        else
+                        {
+                            $("#slider_table #tasks #test_result_" + (i + 1)).text('Task failed');
+                            $("#slider_table #tasks #test_result_" + (i + 1)).addClass('red');
+                            $("#slider_table #tasks #test_score_" + (i + 1)).addClass('red');
+                        }
+
+                        if (parsed_data.results[i].obsolete)
+                            $("#slider_table #tasks #test_obsolete_" + (i + 1)).show();
+                    }
+                    
+                    task_results_state[i] = parsed_data.results[i].status;
+                }
+                
+                if (nb_done < parsed_data.results.length)
+                {
+                    add_timeout("getTestResults()", 5000);
+                }
+                //else
+                //{
+                //    for (var i = 0; i < {{ factoryTasks|length }}; ++i)
+                //        $("#slider_table #tasks #test_button_" + (i + 1)).show();
+                //}
+            }
+        ).error(function() {
+            for (var i = 0; i < {{ factoryTasks|length }}; ++i)
+            {
+                if (task_results_state[i] == null)
+                {
+                    $("#slider_table #tasks #test_result_" + (i + 1)).text('ERROR');
+                    $("#slider_table #tasks #test_result_" + (i + 1)).addClass('red');
+                    $("#slider_table #tasks #test_result_" + (i + 1)).show();
+                    $("#slider_table #tasks #test_progress_" + (i + 1)).hide();
+                }
+            }
+        });
+    }
+
+
+</script>

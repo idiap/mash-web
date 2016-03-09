@@ -1,0 +1,32 @@
+<div class="container">
+    <a id="back_button" href="#" onclick="return back_to_tasks();">&lt;&lt; All tasks</a>
+
+    <span id="task_title"></span>
+    <span id="task_description"></span>
+
+    <div class="text_center">
+        <span id="task_score" class="success"></span>
+        <img id="task_obsolete" src="/images/warning.gif" class="obsolete"
+             title="One or more heuristics were changed since this test was performed" />
+        <span id="task_status" class="inprogress"></span>
+    </div>
+
+    <input id="task_test_button" onclick="return run_test_for_current_task();" type="submit" value="Test">
+    <img id="task_progress" src="/images/progress.gif" style="display: none; margin-top: 5px; width: 16px;"/>
+    <img id="task_image" src="" width="160" height="120" />
+
+    {% for instrument_view in instrument_views %}
+        <div id="instrument_view_{{ instrument_view.id }}" class="instrument_view" style="display:none">
+            <span class="title">{{ instrument_view.title }}</span>
+            <img class="progress" src="/images/progress.gif" />
+            <p class="progress">Generation in progress...</p>
+            <div id="{{ instrument_view.container_id }}" class="instrument_container">
+            </div>
+        </div>
+    {% endfor %}
+
+    <div id="sequences">
+        <span class="title">Score of each sequence:</span>
+        <img id="progress_sequences" src="/images/progress.gif" style="display: none; margin-top: 5px; width: 16px;"/>
+    </div>
+</div>

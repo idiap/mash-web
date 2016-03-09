@@ -1,0 +1,26 @@
+    <script type="text/javascript">
+        
+        function jumpto(current_page, dest_url)
+        {
+            var page = prompt('Enter the page number you wish to go to:', current_page);
+    
+            if (page !== null && !isNaN(page) && page > 0)
+            {
+                document.location.href = dest_url + '&s=' + ((page - 1) * {{ nb_heuristics_per_page }});
+            }
+        }
+        
+    </script>
+
+
+{% if search_popup %}
+    <script type="text/javascript">
+    
+        function insert_heuristic(version, id, name)
+        {
+            opener.insert_heuristic(version, id, name);
+            self.close();
+        }
+    
+    </script>
+{% endif %}

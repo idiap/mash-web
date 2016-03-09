@@ -1,0 +1,60 @@
+{% if mode.can_display_tools %}
+    <script type="text/javascript">
+
+        function confirm_heuristic_deletion(target_link)
+        {
+            $.alerts.okButton = "Yes, I'm sure";
+            $.alerts.cancelButton = "No, don't delete it";
+
+            jConfirm('{{ text_deletion_confirmation|safe|addslashes }}', 'Please confirm your choice: delete this version', function(r) {
+                if (r)
+                {
+                    window.location = target_link.href;
+                }
+            }); 
+
+            return false;
+        }
+
+
+        function confirm_heuristic_publication(target_link)
+        {
+            $.alerts.okButton = 'Publish it';
+            $.alerts.cancelButton = 'Cancel';
+
+            var url = target_link.href;
+
+            jPromptChoiceExtended('{{ text_publication_confirmation|safe|addslashes }}', null,
+                                  'Please confirm your choice: publish this version', function(r) {
+
+                if (r == null)
+                    return;
+                
+                var nb_weeks = parseInt(r);
+                if (nb_weeks > 0)
+                    url += '?nb_weeks=' + nb_weeks;
+
+                window.location = url;
+            }, '#publication_delay', '#publication_accepted');
+
+            return false;
+        }
+
+
+        function confirm_heuristic_status_change(target_link)
+        {
+            $.alerts.okButton = "Yes";
+            $.alerts.cancelButton = "No";
+
+            jConfirm('{{ text_status_change_confirmation|safe|addslashes }}', 'Please confirm your choice', function(r) {
+                if (r)
+                {
+                    window.location = target_link.href;
+                }
+            }); 
+
+            return false;
+        }
+
+    </script>
+{% endif %}

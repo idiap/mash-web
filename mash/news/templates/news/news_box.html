@@ -1,0 +1,21 @@
+<div class="news-box">
+
+    {% if details_enabled %}
+        <p class="news-title">{{ news.title }}</p>
+    {% else %}
+        <p><a class="news-title" href="/news/{{ news.id }}/">{{ news.title }}</a></p>
+    {% endif %}
+
+    <p class="news-infos">{{ news.pub_date }} by <a href="/accounts/profile/{{ news.author.id }}/">{{ news.author.username }}</a></p>
+
+    <div class="news-text">{{ news.resume|safe }}</div>
+
+    {% if news.details %}
+        {% if details_enabled %}
+            <div class="news-text">{{ news.details|safe}}</div>
+        {% else %}
+            <p class="news-rightalign"><a class="news-link" href="/news/{{ news.id }}/">Read more >></a></p>
+        {% endif %}
+    {% endif %}
+
+</div>

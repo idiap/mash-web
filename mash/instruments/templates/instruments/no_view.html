@@ -1,0 +1,7 @@
+{% extends "instruments/base_instruments.html" %}
+
+{% block title %}{{ block.super }} - Data report #{{ report.id }}{% endblock %}
+
+{% block content %}
+    <p>There is no view able to display data reported by the <strong>{{ report.instrument.fullname }}</strong> instrument.</p>
+{% endblock content %}

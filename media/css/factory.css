@@ -1,0 +1,955 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the factory
+*
+*******************************************************************************/
+
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+}
+
+div.factory_topbar *
+{
+    padding: 0;
+    margin: 0;
+}
+
+
+div.factory_topbar
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #EFF0EF;
+    padding: 10px 15px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div.factory_topbar ul
+{
+    height: 2em;
+    list-style-type: none;
+}
+
+
+div.factory_topbar ul.row1
+{
+    border-bottom: 1px solid rgb(255, 255, 255);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+
+div.factory_topbar li
+{
+    display: block;
+    float: left;
+    margin-right: 5px;
+    line-height: 2em;
+}
+
+
+div.factory_topbar li.bold
+{
+    font-weight: bold;
+}
+
+
+div.factory_topbar li.margin-left
+{
+    margin-left: 30px;
+}
+
+
+div.factory_topbar li.margin-left2
+{
+    margin-left: 10px;
+}
+
+
+div.factory_topbar li.right
+{
+    float: right;
+}
+
+
+div.factory_topbar li.red
+{
+    color: #FF0000;
+}
+
+
+div.factory_topbar li a
+{
+    text-decoration: none;
+    color: #000000;
+}
+
+
+div.factory_topbar li a:hover
+{
+    text-decoration: underline;
+    color: #993300;
+}
+
+
+div.factory_topbar li img
+{
+    margin-left: 4px;
+    width: 16px;
+}
+
+
+div#factory_infos_title_box
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 13px;
+    background-color: #EFF0EF;
+    padding: 5px 10px 5px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+div#factory_infos_title_box button
+{
+    float: right;
+    margin-top : -40px;
+}
+
+
+div#factory_infos_box
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #EFF0EF;
+    padding: 5px 10px 5px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+div#factory_select_box
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #EFF0EF;
+    padding: 5px 10px 5px;
+    margin-bottom: 30px;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+table.factory-table-data {
+    width: 864px;
+}
+
+div#factory-computefeatures-editor {
+    position: relative;
+    width: 500px;
+    height: 400px;
+}
+
+div#factory-computefeatures-editor.large {
+    width: 100%;
+}
+
+
+div#factory-dim-editor {
+    position: relative;
+    width: 500px;
+    height: 100px;
+}
+
+div#factory-dim-editor.large {
+    width: 100%;
+}
+
+
+div#factory-attributes-editor {
+    position: relative;
+    width: 500px;
+    height: 200px;
+}
+
+div#factory-attributes-editor.large {
+    width: 100%;
+}
+
+
+div#factory-init-editor {
+    position: relative;
+    width: 500px;
+    height: 100px;
+}
+
+div#factory-init-editor.large {
+    width: 100%;
+}
+
+
+div#factory-terminate-editor {
+    position: relative;
+    width: 500px;
+    height: 100px;
+}
+
+div#factory-terminate-editor.large {
+    width: 100%;
+}
+
+
+div#factory-codesample{
+    position: absolute;
+    float: right;
+    width: 364px;
+    height: 400px;
+    padding-left: 30px;
+}
+
+div#factory-button
+{
+    position: relative;
+    padding-left:450px;
+}
+
+div#factory-removeItem
+{
+    position: relative;
+    padding-top:5px;
+}
+
+
+div.ace_editor {
+    border: 1px solid #BBBBBB;
+}
+
+input.button
+{
+    border: 1px solid #B0B0B0;
+    background-color: #FAFAFA;
+    background-image: url(/images/bg_button.gif);
+    color: #00FF00;
+    padding: 1px 3px;
+    width: 25px;
+}
+
+input.minus
+{
+    color: #FF0000;
+}
+
+
+input.disabled
+{
+    color: #909090;
+}
+
+img.displayed
+{
+    margin-top:auto;
+    margin-bottom:auto;
+}
+
+a.factory_tutorial_link
+{
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 12px;
+    color: #000000;
+}
+
+a.factory_tutorial_link:hover
+{
+    text-decoration: underline;
+    color: #993300;
+}
+
+
+td.code-prototype
+{
+    font-family: Courier;
+    font-size: 13px;
+    color: #666666;
+}
+
+p.flip
+{
+    margin: 0px;
+    padding: 5px;
+    text-align: center;
+    background: #e5eecc;
+    border: solid 1px #c3c3c3;
+}
+
+div.panel
+{
+    margin-bottom: 20px;
+    width: 100%;
+    display: none;
+}
+
+div.panellight
+{
+    margin-bottom: 20px;
+    width: 100%;
+    display: none;
+}
+
+
+div.factory_debugbar *
+{
+    padding: 0;
+    margin: 0;
+}
+
+
+div.factory_debugbar
+{
+    color: #0000FF;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #EFF0EF;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    width: 11em;
+}
+
+div.factory_debugbar ul
+{
+    height: 2em;
+    list-style-type: none;
+}
+
+
+div.factory_debugbar ul.row1
+{
+    border-bottom: 1px solid rgb(255, 255, 255);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+
+div.factory_debugbar li
+{
+    display: block;
+    float: left;
+    margin-right: 5px;
+    line-height: 2em;
+}
+
+
+div.factory_debugbar li.bold
+{
+    font-weight: bold;
+}
+
+div.factory_debugbar li.margin-left
+{
+    margin-left: 10px;
+}
+
+
+div.factory_debugbar li a
+{
+    text-decoration: none;
+    color: #000000;
+}
+
+
+div.factory_debugbar li a:hover
+{
+    text-decoration: underline;
+    color: #993300;
+}
+/* Gradient transparent - color - transparent */
+
+hr.debug_hr
+{
+    border: 0;
+    height: 1px;
+    background-image: -webkit-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+    background-image: -moz-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+    background-image: -ms-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+    background-image: -o-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+}
+
+
+div.factory_debug_frame_header
+{
+    border-top: 1px solid black;
+    font-weight: bold;
+    margin-top: 20px;
+    padding-top: 6px;
+}
+
+
+/********************* SLIDER **********************/
+
+table#slider_table td.slide
+{
+    vertical-align: top;
+    width: 864px;
+    font-family: Arial;
+    font-size: 12px;
+    padding: 5px;
+}
+
+
+table#slider_table td.slide div.container
+{
+    width: 864px;
+}
+
+
+table#slider_table div.text_center
+{
+    display: block;
+    text-align: center;
+}
+
+
+table#slider_table img.obsolete
+{
+    margin-left: 5px;
+}
+
+
+
+/********************* TASK SELECTION **********************/
+
+td#tasks table#factory_task_selector
+{
+    width: 864px;
+}
+
+
+td#tasks table#factory_task_selector td:hover
+{
+    background-color: #FFFFCC;
+}
+
+
+td#tasks table#factory_task_selector img.thumbnail
+{
+    display: block;
+    margin-bottom: 5px;
+}
+
+
+td#tasks table#factory_task_selector img.progress
+{
+    width: 16px;
+    margin-top: 5px;
+}
+
+
+td#tasks table#factory_task_selector span.title
+{
+    font-weight: bold;
+    margin-bottom: 3px;
+    font-size: 15px;
+}
+
+
+td#tasks table#factory_task_selector span.score
+{
+    font-weight: bold;
+    font-size: 14px;
+}
+
+
+td#tasks table#factory_task_selector span.result
+{
+    font-style: italic;
+    color: #0000FF;
+    display: block;
+}
+
+
+td#tasks table#factory_task_selector span.red
+{
+    color: #FF0000;
+}
+
+
+td#tasks table#factory_task_selector span.green
+{
+    color: #007000;
+}
+
+
+/********************* TASK DETAILS **********************/
+
+td#details #task_title
+{
+    display: block;
+    text-align: center;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+
+td#details #task_description
+{
+    display: block;
+    font-style: italic;
+    text-align: center;
+    color: #777777;
+    margin-bottom: 5px;
+}
+
+
+td#details #task_status
+{
+    display: block;
+    text-align: center;
+    font-style: italic;
+}
+
+
+td#details #task_score
+{
+    font-weight: bold;
+    font-size: 16px;
+}
+
+
+td#details #task_progress
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+td#details #task_test_button
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50px;
+}
+
+
+td#details #task_image
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+}
+
+
+td#details .inprogress
+{
+    color: #0000FF;
+}
+
+
+td#details .success
+{
+    color: #007000;
+}
+
+
+td#details .failed
+{
+    color: #FF0000;
+}
+
+
+td#details .title
+{
+    font-size: 13px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+
+td#details div#sequences,
+td#details div.instrument_view
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 25px;
+    width: 600px;
+}
+
+
+td#details div.instrument_view div.instrument_container
+{
+    width: 600px;
+}
+
+
+td#details div.instrument_view img.progress
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+}
+
+
+td#details div.instrument_view p.progress
+{
+    color: #888888;
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 10px;
+    text-align: center;
+}
+
+
+td#details div.instrument_view p.error
+{
+    color: #FF0000;
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 10px;
+    text-align: center;
+}
+
+
+/********************* SEQUENCE DETAILS **********************/
+
+td#sequence #sequence_title
+{
+    display: block;
+    font-weight: bold;
+    font-size: 15px;
+    text-align: center;
+}
+
+
+td#sequence #sequence_description
+{
+    display: block;
+    font-style: italic;
+    text-align: center;
+    color: #777777;
+    margin-bottom: 5px;
+}
+
+
+td#sequence #sequence_status
+{
+    display: block;
+    text-align: center;
+    font-style: italic;
+}
+
+
+td#sequence #sequence_score
+{
+    font-weight: bold;
+    font-size: 16px;
+}
+
+
+td#sequence #sequence_infos
+{
+    display: block;
+    margin-top: 5px;
+    text-align: center;
+    color: #0000FF;
+}
+
+
+td#sequence #sequence_error
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+    text-align: center;
+    color: #FF0000;
+}
+
+
+td#sequence #sequence_heuristic
+{
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+
+td#sequence .inprogress
+{
+    color: #0000FF;
+}
+
+
+td#sequence .success
+{
+    color: #007000;
+}
+
+
+td#sequence .failed
+{
+    color: #FF0000;
+}
+
+
+td#sequence .title
+{
+    font-size: 13px;
+    font-weight: bold;
+}
+
+
+td#sequence #recorded_data_progress
+{
+    display: block;
+    margin-top: 15px;
+    width: 32px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+td#sequence #heuristic_selection_box
+{
+    text-align: center;
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+
+td#sequence .frame_container
+{
+    padding: 10px;
+    width: 864px;
+    border-top: 1px solid black;
+}
+
+
+td#sequence td.left_container
+{
+    padding: 0;
+    width: 200px;
+    vertical-align: top;
+}
+
+
+td#sequence td.right_container
+{
+    padding: 0;
+    vertical-align: top;
+}
+
+
+td#sequence .frame_title
+{
+    font-weight: bold;
+    font-size: 15px;
+    vertical-align: bottom;
+}
+
+
+td#sequence .title_container img.result
+{
+    height: 16px;
+    margin-right: 5px;
+}
+
+
+td#sequence .title_container img.teacher_action
+{
+    margin-left: 5px;
+}
+
+
+td#sequence .title_container span.performed_action
+{
+    margin-left: 15px;
+    color: #FF0000;
+    test-style: italic;
+}
+
+
+td#sequence .frame_text
+{
+    display: block;
+    height: 14px;
+}
+
+
+td#sequence .frame_src_image
+{
+    display: block;
+    margin-bottom: 10px;
+}
+
+
+td#sequence .frame_image
+{
+    margin-bottom: 5px;
+    margin-right: 5px;
+}
+
+
+td#sequence a#back_button,
+td#details a#back_button,
+td#sequence a.more
+{
+    display: inline;
+    font-weight: bold;
+    margin-left: 10px;
+    color: #0000EE;
+    text-decoration: none;
+}
+
+
+td#sequence a#back_button:hover,
+td#details a#back_button:hover,
+td#sequence a.more:hover
+{
+    text-decoration: underline;
+}
+
+
+div.task_entry
+{
+    margin-top: 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 40px;
+    padding-left: 15px;
+}
+
+
+div.task_entry.collapsed
+{
+    margin-bottom: 10px;
+}
+
+
+div.task_entry.hidden
+{
+    display: none;
+}
+
+
+div.task_entry .task_entry_header
+{
+    color: #000000;
+    font-size: 14px;
+    font-weight: bold;
+    outline: 0;
+    text-decoration: none;
+}
+
+
+div.task_entry .task_entry_header:hover
+{
+    color: #993300;
+}
+
+
+div.task_entry .task_entry_title
+{
+    padding-bottom: 3px;
+}
+
+
+div.task_entry .task_entry_title table
+{
+    border: 0 none;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+
+div.task_entry .task_entry_number
+{
+    width: 60px;
+}
+
+
+div.task_entry .task_entry_score
+{
+    text-align: right;
+    width: 60px;
+    color: #FF0000;
+}
+
+
+div.task_entry .task_entry_icon
+{
+    width: 10px;
+}
+
+
+div.task_entry .task_entry_content
+{
+    padding-left: 20px;
+}
+
+
+div.task_entry .task_entry_content table
+{
+    border: 0 none;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    font-size: 14px;
+}
+
+
+div.task_entry .task_entry_content table tr:hover
+{
+    background-color: #EEEEEE;
+}
+
+
+div.task_entry .user_entry_heuristics
+{
+    text-align: center;
+    width: 90px;
+    font-style: italic;
+}
+
+
+div.task_entry .user_entry_score
+{
+    text-align: right;
+    width: 60px;
+    color: #FF0000;
+}
+
+
+div.task_entry td.success
+{
+    color: #007000;
+}

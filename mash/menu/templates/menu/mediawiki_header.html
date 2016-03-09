@@ -1,0 +1,98 @@
+<div id="topbar" style="margin-bottom:0;">
+    <a href="{{ urls_prefix }}/"><img id="mash_logo" alt="MASH logo" src="{{ urls_prefix }}/images/logo-mash-2.png" /></a>
+    <a href="{{ urls_prefix }}/"><img id="mash_logo_text" alt="MASH logo" src="{{ urls_prefix }}/images/logo-mash-text-2.png" /></a>
+
+    <div id="login_infos">
+
+<?php
+	global $wgUser;
+
+    $userIsAdmin = false;
+
+	if ($wgUser->isLoggedIn())
+	{
+		global $wgDBserver, $wgDBname, $wgDBuser, $wgDBpassword;
+		
+		$db = new Database($wgDBserver, $wgDBuser, $wgDBpassword, $wgDBname);
+		
+		$sql = "SELECT is_superuser FROM auth_user
+				WHERE username='" . $wgUser->getName() . "'";
+		$result = $db->query($sql);
+
+    	if ($db->numRows($result) == 1)
+    	{
+    	    $row = $db->fetchRow($result);
+    	    $userIsAdmin = ($row['is_superuser'] == 1);
+    	}
+
+		$db->freeResult($result);
+?>
+        <span>Logged in as <a id="username" href="{{ urls_prefix }}/accounts/profile"><?php echo $wgUser->getName() ?></a> | <?php
+
+		$sql = "SELECT msg_id FROM phpbb_privmsgs_to, phpbb_users
+				WHERE phpbb_users.username='" . $wgUser->getName() . "'
+				AND phpbb_privmsgs_to.user_id=phpbb_users.user_id
+				AND phpbb_privmsgs_to.pm_unread=1";
+		$result = $db->query($sql);
+
+    	$nb_pms = $db->numRows($result);
+
+		$db->freeResult($result);
+
+		if ($nb_pms == 0)
+		{
+?>
+        	<a id="inbox" class="empty" href="/forum/ucp.php?i=pm&folder=inbox">Inbox (0)</a> | 
+<?php
+		}
+		else
+		{
+?>
+            <a id="inbox" class="not-empty" href="/forum/ucp.php?i=pm&folder=inbox">Inbox (<?php echo $nb_pms; ?>)</a> | 
+<?php
+		}
+
+        if ($userIsAdmin)
+        {
+            echo '<a href="{{ urls_prefix }}/admin">Admin</a> | ';
+        }
+        
+        ?><a href="{{ urls_prefix }}/accounts/logout">Logout</a></span>
+<?php
+	}
+	else
+	{
+?>
+	    <span><a href="/accounts/login">Login</a> | <a class="last" href="/accounts/register">Register</a></span>
+<?php
+	}
+?>
+
+    </div>
+    
+    <div id="menu">
+		<?php
+			if ($wgUser->isLoggedIn())
+			{
+				if ($userIsAdmin)
+				{
+		?>
+                	{{ admin_menu|safe }}
+		<?php
+				}
+				else
+				{
+		?>
+                	{{ logged_menu|safe }}
+		<?php
+				}
+			}
+			else
+			{
+		?>
+            	{{ anonymous_menu|safe }}
+		<?php
+			}
+		?>
+    </div>
+</div>

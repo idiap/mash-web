@@ -1,0 +1,78 @@
+{% if mode.can_query or mode.can_display_all_heuristics or mode.can_display_own_heuristics or multiple_pages %}
+    <div class="heuristics_topbar">
+        
+        {% if mode.can_display_all_heuristics or mode.can_display_own_heuristics %}
+            <ul class="row1">
+                <li class="">Display:</li>
+
+                {% if mode.can_display_all_heuristics %}
+                    <li class="margin-left2 bold"><a href="/heuristics/">All the heuristics </a></li>
+                    {% if mode.can_display_own_heuristics and request.user.is_authenticated %}
+                        <li class="margin-left bold"><a href="/heuristics/public/">My public heuristics </a></li>
+                        <li class="margin-left bold"><a href="/heuristics/private/">My private heuristics </a></li>
+                    {% endif %}
+                {% else %}
+                    {% if mode.can_display_own_heuristics %}
+                        <li class="margin-left2 bold"><a href="/heuristics/public/">My public heuristics </a></li>
+                        <li class="margin-left bold"><a href="/heuristics/private/">My private heuristics </a></li>
+                    {% endif %}
+                {% endif %}
+
+                {% if mode.can_query %}
+                    <li class="right rightmost">
+                        <form id="search" method="post" action="{{ configuration.queryUrl }}">
+                            <fieldset>
+                                <input class="searchbox {% if not configuration.query %}blurred {% endif %}" type="text" onblur="if (this.value == '') { this.value = 'Search…'; this.className = 'searchbox blurred'; }" onclick="if (this.value == 'Search…') { this.value = ''; this.className = 'searchbox'; }" value="{% if configuration.query %}{{ configuration.query }}{% else %}Search…{% endif %}" title="Search for keywords" maxlength="128" name="query"/>
+                                <input class="button" type="submit" value="Search"/>
+                            </fieldset>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        {% endif %}
+
+        {% if mode.can_query or multiple_pages %}
+            <ul>
+                {% if mode.can_query %}
+                    <li class="bold"><a href="{{ configuration.initialsUrl }}">All</a></li>
+
+                    {% for letter in letters %}
+                        <li class="bold"><a href="{{ configuration.initialsUrl }}&i={{ letter|lower }}">{{ letter }}</a></li>
+                    {% endfor %}
+                {% endif %}
+
+                {% if not mode.can_display_all_heuristics and not mode.can_display_own_heuristics and mode.can_query %}
+                    <li class="right rightmost">
+                         <form id="search" method="post" action="{{ configuration.queryUrl }}">
+                             <fieldset>
+                                 <input class="searchbox {% if not configuration.query %}blurred {% endif %}" type="text" onblur="if (this.value == '') { this.value = 'Search…'; this.className = 'searchbox blurred'; }" onclick="if (this.value == 'Search…') { this.value = ''; this.className = 'searchbox'; }" value="{% if configuration.query %}{{ configuration.query }}{% else %}Search…{% endif %}" title="Search for keywords" maxlength="128" name="query"/>
+                                 <input class="button" type="submit" value="Search"/>
+                             </fieldset>
+                         </form>
+                     </li>
+                {% endif %}
+
+                <li class="right rightmost">
+                    {% if nb_heuristics %}
+                        {{ nb_heuristics }} heuristic{% ifnotequal nb_heuristics 1 %}s{% endifnotequal %}
+                    {% else %}
+                        0 heuristic
+                    {% endif %}
+                    {% if multiple_pages %} • <a title="Click to jump to page…" onclick="jumpto({{ current_page }}, '{{ configuration.navigationUrl }}'); return false;" href="#">Page {{ current_page }} of {{ nb_pages }}</a> • {{ pages_navigation|safe }}{% endif %}
+                </li>
+            </ul>
+        {% endif %}
+    </div>
+{% endif %}
+
+
+{% if heuristics or versions %}
+    <div id="heuristics_list">
+        <table cellspacing="1">
+            <thead>{{ table_header|safe }}</thead>
+            <tbody>{% include mode.list_template %}</tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="heuristics_text">No heuristic found</p>
+{% endif %}

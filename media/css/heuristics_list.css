@@ -1,0 +1,378 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display a list of heuristics
+*
+*******************************************************************************/
+
+div#mash-content.search_popup
+{
+    padding-top: 0;
+}
+
+
+li#heuristics_banner
+{
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1.2em;
+}
+
+
+div.heuristics_topbar *
+{
+    padding: 0;
+    margin: 0;
+}
+
+
+div.heuristics_topbar
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #EFF0EF;
+    padding: 10px 15px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div.heuristics_topbar ul
+{
+    height: 2em;
+    list-style-type: none;
+}
+
+
+div.heuristics_topbar ul.row1
+{
+    border-bottom: 1px solid rgb(255, 255, 255);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+
+div.heuristics_topbar li
+{
+    display: block;
+    float: left;
+    margin-right: 5px;
+    line-height: 2em;
+}
+
+
+div.heuristics_topbar li.bold
+{
+    font-weight: bold;
+}
+
+
+div.heuristics_topbar li.margin-left
+{
+    margin-left: 30px;
+}
+
+
+div.heuristics_topbar li.margin-left2
+{
+    margin-left: 10px;
+}
+
+
+div.heuristics_topbar li.right
+{
+    float: right;
+}
+
+
+div.heuristics_topbar li.rightmost
+{
+    margin-right: 0;
+}
+
+
+div.heuristics_topbar li a
+{
+    text-decoration: none;
+    color: #000000;
+}
+
+
+div.heuristics_topbar li a:hover
+{
+    text-decoration: underline;
+    color: #993300;
+}
+
+
+div.heuristics_topbar form#search
+{
+    margin-left: 15px;
+    font-family: Verdana,Helvetica,Arial,sans-serif;
+    font-size: 1em;
+    font-weight: normal;
+}
+
+
+div.heuristics_topbar form#search fieldset
+{
+    border: 0;
+}
+
+
+div.heuristics_topbar form#search input.searchbox
+{
+    border: 1px solid #000000;
+    background-color: #FFFFFF;
+    width: 16em;
+    background-image: url(/images/icon_textbox_search.gif);
+    background-position: left 1px;
+    background-repeat: no-repeat;
+    padding-left: 17px;
+    padding-right: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+
+div.heuristics_topbar form#search input.blurred
+{
+    color: #888888;
+}
+
+
+div.heuristics_topbar form#search input.button
+{
+    padding: 1px 3px;
+}
+
+
+#heuristics_list
+{
+    color: #000000;
+    background-color: #AD3119;
+    font-family: Arial;
+    font-size: 12px;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+#heuristics_list table
+{
+    width: 100%;
+}
+
+
+#heuristics_list table thead
+{
+    line-height: 2em;
+    color: #FFFFFF;
+}
+
+
+#heuristics_list table th
+{
+    color: #FFFFFF;
+}
+
+
+#heuristics_list table th a
+{
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+
+#heuristics_list table th a:hover
+{
+    text-decoration: underline;
+}
+
+
+#heuristics_list table tr.row1
+{
+    background-color: #F0F0F0;
+}
+
+
+#heuristics_list table tr.row2
+{
+    background-color: #E0E0E0;
+}
+
+
+#heuristics_list table tr.notchecked
+{
+    background-color: #FFFFCC;
+}
+
+
+#heuristics_list table tr.error
+{
+    background-color: #F08080;
+}
+
+
+#heuristics_list table td
+{
+    padding: 5px;
+    border-top: 1px solid #FFFFFF;
+}
+
+
+#heuristics_list table td a
+{
+    text-decoration: none;
+    color: #000000;
+    font-weight: bold;
+}
+
+
+#heuristics_list table td a:hover
+{
+    text-decoration: underline;
+    color: #993300;
+}
+
+
+#heuristics_list table a.select
+{
+    text-decoration: none;
+    color: #AD3119;
+    font-weight: normal;
+}
+
+
+#heuristics_list table td.username
+{
+    width: 10%;
+    text-align: center;
+}
+
+
+#heuristics_list table td.name
+{
+    width: 20%;
+    text-align: center;
+}
+
+
+#heuristics_list table td.rank
+{
+    width: 5em;
+    text-align: center;
+}
+
+
+#heuristics_list table td.versions
+{
+    width: 6em;
+    text-align: center;
+}
+
+
+#heuristics_list table td.accessibility
+{
+    width: 8em;
+    text-align: center;
+}
+
+
+#heuristics_list table td.status
+{
+    width: 5em;
+    text-align: center;
+}
+
+
+#heuristics_list table td.description
+{
+}
+
+
+#heuristics_list table td.date
+{
+    text-align: left;
+    width: 16em;
+}
+
+
+#heuristics_list table td.publictools,
+#heuristics_list table td.privatetools
+{
+    width: 6em;
+    text-align: center;
+}
+
+
+p.heuristics_text
+{
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+
+span#pages_nav strong
+{
+    border: 1px solid #993300;
+    background-color: #993300;
+    color: #FFFFFF;
+    font-size: 0.95em;
+    font-weight: normal;
+    line-height: 1.5em;
+    margin: 0 2px;
+    padding: 0 2px;
+}
+
+
+span#pages_nav
+{
+    font-family: Verdana,Helvetica,Arial,sans-serif;
+}
+
+
+span#pages_nav a
+{
+    border: 1px solid #993300;
+    text-decoration: none;
+    font-size: 0.95em;
+    line-height: 1.5em;
+    margin: 0 2px;
+    padding: 0 2px;
+}
+
+
+span#pages_nav a:hover
+{
+    background-color: #993300;
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+
+input.button
+{
+    border: 1px solid #B0B0B0;
+    background-color: #FAFAFA;
+    background-image: url(/images/bg_button.gif);
+    color: #000000;
+    padding: 1px 3px;
+    width: auto;
+}
+
+
+input.disabled
+{
+    color: #909090;
+}

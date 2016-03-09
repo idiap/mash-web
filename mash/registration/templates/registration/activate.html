@@ -1,0 +1,47 @@
+{% extends "registration/base_registration.html" %}
+
+{% block content %}
+<script src="/js/jquery.js" type="text/javascript"></script>
+<script src="/js/jquery.cookie.js"  type="text/javascript" charset="utf-8">
+</script>
+
+
+    <div id="registration_form">
+        <p class="registration_form_title">
+            {% if account %}
+                Account activation
+            {% else %}
+                Error
+            {% endif %}
+        </p>
+        {% if account %}
+            <p class="text" id="activated_account">Your account was successfully activated. Welcome {{ account.username }}.
+            You can now <a href="/accounts/login">login</a> and implement your own heuristics!</p>
+        {% else %}
+            <p class="text">Your account wasn't activated. Please check that the URL you entered is correct.</p>
+            <p class="text">If you still have problems to activate your account, please contact a member of our support
+            staff at <a href="mailto:admin@{{ site.domain }}">admin@{{ site.domain }}</a></p>
+        {% endif %}
+    </div>
+
+<script type="text/javascript">
+
+$(window).load(function(){
+        //if no cookie is stored so create a cookie
+        if($.cookie('robot_uid') == null)
+        {
+            //no cookie stored in browser
+        }
+        else
+        {
+            //cookie already stored in browser: overwrite it
+            $.cookie('robot_uid','REGISTERED_USER', { path: '/' });
+        }
+
+});
+
+
+</script>
+
+{% endblock content %}
+

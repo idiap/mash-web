@@ -1,0 +1,121 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the 'Add a server' page
+*
+*******************************************************************************/
+
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+    font-size: 14px;
+}
+
+
+div#mash-content.container h2
+{
+    color: #993300;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+
+form#infos
+{
+    font-size: 14px;
+}
+
+
+form#infos fieldset
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+
+form#infos dl
+{
+    margin-top: 16px;
+    margin-bottom: 0px;
+}
+
+
+form#infos dt
+{
+    display: block;
+    float: left;
+    width: 5em;
+}
+
+
+form#infos dd
+{
+    margin-left: 5em;
+}
+
+
+form#infos span
+{
+    color: #000000;
+    margin-right: 10px;
+}
+
+
+form#infos span.error
+{
+    color: #FF0000;
+    font-size: 14px;
+}
+
+
+form#infos ul
+{
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+    padding: 0px;
+    margin-left: 0px;
+}
+
+
+form#infos ul li
+{
+    margin-left: 0px;
+}
+
+
+form#infos ul input
+{
+    margin-left: 0px;
+}
+
+
+form#infos ul.errorlist
+{
+    color: #FF0000;
+}
+
+
+form#infos div.buttons
+{
+    margin-top: 20px;
+    margin-left: 5em;
+}
+
+
+form#infos input.button
+{
+    border: 1px solid #B0B0B0;
+    background-color: #FAFAFA;
+    background-image: url(/images/bg_button.gif);
+    color: #000000;
+    padding: 1px 10px;
+    width: auto;
+    text-decoration: none;
+    font-size: 0.9em;
+    text-align:center;
+    margin-right: 4px;
+}

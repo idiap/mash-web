@@ -1,0 +1,29 @@
+{% load heuristic_tags %}
+
+{% for heuristic in heuristics %}
+
+    {% latest_heuristic_version heuristic request.user as latest_version %}
+
+    <tr class="{% cycle 'row1' 'row2' %}">
+        {% if mode.relate_to_any_user %}
+            <td class="username"><a href="/accounts/profile/{{ heuristic.author.id }}">{{ heuristic.author.username }}</a></td>
+        {% endif %}
+        
+        <td class="name">
+            <a href="/heuristics/v{{ latest_version.id }}">{{ heuristic.latest_version.shortname }}</a>
+            <br/>
+            <a class="select" onclick="insert_heuristic({{ latest_version.id }}, {{ heuristic.id }}, '{{ heuristic.fullname }}'); return false;" href="#">[Select]</a>
+        </td>
+
+        <td class="rank">{% if latest_version.rank %}{{ latest_version.rank }}{% else %}-{% endif %}</td>
+        <td class="versions">{{ latest_version.version }}</td>
+
+        {% if mode.can_display_accessibility %}
+            <td class="accessibility">{% if latest_version.public %}Public{% else %}Private{% endif %}</td>
+        {% endif %}
+
+        <td class="description">{% if heuristic.short_description %}{{ heuristic.short_description }}{% else %}&nbsp;{% endif %}</td>
+
+        <td class="date">{{ latest_version.upload_date|date:"N j, Y, P" }}</td>
+    </tr>
+{% endfor %}

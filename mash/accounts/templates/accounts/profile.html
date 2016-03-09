@@ -1,0 +1,422 @@
+{% extends "accounts/base_accounts_aligned.html" %}
+
+{% block title %}{{ block.super }} - Profile{% ifnotequal request.user target_user %} of '{{ target_user.username }}'{% endifnotequal %}{% endblock %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+
+    <link rel="stylesheet" href="/css/details_box.css" />
+
+    {% if html_heuristic_error_reports or html_classifier_error_reports or html_goalplanner_error_reports or html_instrument_error_reports %}
+        <link rel="stylesheet" href="/css/tools_error_report.css" />
+    {% endif %}
+
+    {% ifequal request.user target_user %}
+        <link rel="stylesheet" href="/css/jquery.alerts.css" />
+    {% endifequal  %}
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super }}
+
+    <script src="/js/jquery.js" type="text/javascript"></script>
+
+    {% if html_heuristic_error_reports or html_classifier_error_reports or html_goalplanner_error_reports or html_instrument_error_reports %}
+          {% include "tools/scripts_error_report.html" %}
+    {% endif %}
+
+    {% ifequal request.user target_user %}
+        <script src="/js/jquery.alerts.js" type="text/javascript"></script>
+
+        <script type="text/javascript">
+
+            function createGroup()
+            {
+                jPrompt('Note that the name of your group will be prefixed with your username',
+                        '{{ request.user.username }}/', 'Enter a name for your new group',
+                        function(result) {
+                            if (result === null)
+                                return;
+
+                            $.post('/accounts/group/create/', {'name': result},
+                                    function(data) {
+                                        var parsed_data = JSON.parse(data);
+
+                                        if (parsed_data.error)
+                                        {
+                                            jAlert("The name '" + parsed_data.name + "' is already used!", 'Error');
+                                        }
+                                        else
+                                        {
+                                            var target = $('#groups_list_target')[0];
+
+                                            var row = document.createElement('tr');
+                                            row.id = 'group_' + parsed_data.id;
+
+                                            if (target.childElementCount % 2 == 0)
+                                                row.className = 'row1';
+                                            else
+                                                row.className = 'row2';
+
+                                            var cell = document.createElement('td');
+                                            cell.className = 'name';
+                                            cell.textContent = parsed_data.name;
+                                            row.appendChild(cell);
+
+                                            cell = document.createElement('td');
+                                            cell.className = 'members';
+                                            cell.textContent = '1';
+                                            row.appendChild(cell);
+
+                                            cell = document.createElement('td');
+                                            cell.className = 'pending_members';
+                                            cell.textContent = '0';
+                                            row.appendChild(cell);
+
+                                            cell = document.createElement('td');
+                                            cell.className = 'tools';
+
+                                            var link = document.createElement('a');
+                                            link.href = '/forum/ucp.php?i=groups&mode=manage&action=edit&g=' + parsed_data.id;
+                                            link.textContent = 'Settings';
+                                            cell.appendChild(link);
+
+                                            link = document.createElement('a');
+                                            link.href = '/forum/ucp.php?i=groups&mode=manage&action=list&g=' + parsed_data.id;
+                                            link.textContent = 'Manage members';
+                                            cell.appendChild(link);
+
+                                            link = document.createElement('a');
+                                            link.href = '#';
+                                            link.textContent = 'Delete';
+                                            link.onclick = function() { return deleteGroup(parsed_data.name, parsed_data.id); }
+                                            cell.appendChild(link);
+
+                                            row.appendChild(cell);
+
+                                            target.appendChild(row);
+
+                                            $('#groups_list').show();
+                                        }
+                                    }
+                            );
+                        }
+                );
+
+                return false;
+            }
+
+
+            function deleteGroup(name, id)
+            {
+                jConfirm("Are you sure that you want to delete the group '" + name + "' ?",
+                         'Please confirm',
+                        function(choice) {
+                            if (choice === false)
+                                return;
+
+                            $.post('/accounts/group/delete/', {'id': id},
+                                    function(data) {
+                                        var to_delete = $('#group_' + id)[0];
+                                        var next = to_delete.nextElementSibling;
+                                        var target = $('#groups_list_target')[0];
+
+                                        var className = to_delete.className;
+
+                                        target.removeChild(to_delete);
+
+                                        while (next !== null)
+                                        {
+                                            next.className = className;
+
+                                            if (className == 'row1')
+                                                className = 'row2';
+                                            else
+                                                className = 'row1';
+
+                                            next = next.nextElementSibling;
+                                        }
+
+                                        if (target.childElementCount == 0)
+                                            $('#groups_list').hide();
+                                    }
+                            );
+                        }
+                );
+
+                return false;
+            }
+
+        </script>
+    {% endifequal %}
+
+{% endblock scripts %}
+
+
+{% block content %}
+<script src="/js/jquery.js" type="text/javascript"></script>
+<script src="/js/jquery.cookie.js"  type="text/javascript" charset="utf-8">
+</script>
+
+    <div id="profile_box">
+        <table>
+            <tr>
+                <td valign="top" class="left">
+                    <div>
+                       {% if profile.forum_user and profile.forum_user.user_avatar %}
+                            <img alt="User avatar" src="/forum/download/file.php?avatar={{ profile.forum_user.user_avatar }}"/>
+                        {% else %}
+                            <img alt="User avatar" src="/images/default_avatar.jpg"/>
+                        {% endif %}
+                        {% if profile.forum_user and profile.forum_user.user_rank and profile.forum_user.user_rank.rank_title %}
+                            <p>{{ profile.forum_user.user_rank.rank_title }}</p>
+                        {% endif %}
+                    </div>
+                </td>
+                <td valign="top">
+                    <div class="infos">
+                        <dl>
+                            <dt> </dt>
+                            <dd class="username">{{ target_user.username }}</dd>
+
+                            {% if profile.forum_user %}
+                                {% if profile.forum_user.user_website %}
+                                    <dt>Website:</dt>
+                                    <dd><a href="{{ profile.forum_user.user_website }}">{{ profile.forum_user.user_website }}</a></dd>
+                                {% endif %}
+                                {% if profile.forum_user.user_from %}
+                                    <dt>Location:</dt>
+                                    <dd>{{ profile.forum_user.user_from }}</dd>
+                                {% endif %}
+                                {% if profile.forum_user.user_occupation %}
+                                    <dt>Occupation:</dt>
+                                    <dd>{{ profile.forum_user.user_occupation }}</dd>
+                                {% endif %}
+                                {% if profile.forum_user.user_interests %}
+                                    <dt>Interests:</dt>
+                                    <dd>{{ profile.forum_user.user_interests }}</dd>
+                                {% endif %}
+
+                                {% if profile.forum_user.user_website or profile.forum_user.user_from or profile.forum_user.user_occupation or profile.forum_user.user_interests %}
+                                    <dt> </dt>
+                                    <dd class="separator"> </dd>
+                                {% endif %}
+
+                            {% endif %}
+
+                            <dt>Member since:</dt>
+                            <dd>{{ target_user.date_joined|date:"N j, Y, P" }}</dd>
+                            <dt>Last visit:</dt>
+                            <dd>{{ target_user.last_login|date:"N j, Y, P" }}</dd>
+
+                            <dt> </dt>
+                            <dd class="separator"> </dd>
+
+                            {% ifequal target_user request.user %}
+                                <dt>Public heuristics count:</dt>
+                                <dd>{{ profile.public_heuristics_count }} <a href="/heuristics/public/">(see all your public heuristics)</a></dd>
+                                <dt>Private heuristics count:</dt>
+                                <dd>{{ profile.private_heuristics_count }} <a href="/heuristics/private/">(see all your private heuristics)</a></dd>
+                            {% else %}
+                                {% if request.user.is_superuser %}
+                                    <dt>Public heuristics count:</dt>
+                                    <dd>{{ profile.public_heuristics_count }} <a href="/heuristics/public/{{ target_user.id }}/">(see all the public heuristics of {{ target_user }})</a></dd>
+                                    <dt>Private heuristics count:</dt>
+                                    <dd>{{ profile.private_heuristics_count }} <a href="/heuristics/private/{{ target_user.id }}/">(see all the private heuristics of {{ target_user }})</a></dd>
+                                {% else %}
+                                    <dt>Heuristics count:</dt>
+                                    <dd>{{ profile.public_heuristics_count }} <a href="/heuristics/public/{{ target_user.id }}/">(see all the heuristics of {{ target_user }})</a></dd>
+                                {% endif %}
+                            {% endifequal %}
+                            <dt>Posts count:</dt>
+                            <dd>{% if profile.forum_user %}{{ profile.forum_user.phpbbpost_set.count }}{% else %}0{% endif %}</dd>
+                        </dl>
+                    </div>
+                </td>
+
+                {% ifnotequal request.user target_user %}
+                    {% if request.user.is_authenticated %}
+                        {% if request.user.is_superuser %}
+                            {% if target_user.is_superuser %}
+                                <td valign="top" class="tools to_projectmember">
+                                    <span><a title="Downgrade to 'Project member'" href="/accounts/promote/projectmember/{{ target_user.id }}/"></a></span>
+                                </td>
+                                <td valign="top" class="tools to_contributor">
+                                    <span><a title="Downgrade to 'Contributor'" href="/accounts/promote/contributor/{{ target_user.id }}/"></a></span>
+                                </td>
+                            {% else %}
+                                <td valign="top" class="tools to_superuser">
+                                    <span><a title="Promote to 'Superuser'" href="/accounts/promote/superuser/{{ target_user.id }}/"></a></span>
+                                </td>
+                                {% if target_user.get_profile.project_member %}
+                                    <td valign="top" class="tools to_contributor">
+                                        <span><a title="Downgrade to 'Contributor'" href="/accounts/promote/contributor/{{ target_user.id }}/"></a></span>
+                                    </td>
+                                {% else %}
+                                    <td valign="top" class="tools to_projectmember">
+                                        <span><a title="Promote to 'Project member'" href="/accounts/promote/projectmember/{{ target_user.id }}/"></a></span>
+                                    </td>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+
+                        <td valign="top" class="tools animated pm">
+                            <span><a title="Private message" href="/forum/ucp.php?i=pm&mode=compose&u={{ profile.forum_user.user_id }}"></a></span>
+                        </td>
+
+                        {% if request.user.get_profile.project_member and target_user.email %}
+                            <td valign="top" class="tools animated mail">
+                                <span><a title="E-mail" href="mailto:{{ target_user.email }}"></a></span>
+                            </td>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <td valign="top" class="tools own">
+                        <p><a title="Edit my profile" href="/forum/ucp.php?i=profile&mode=profile_info">Edit my profile</a></p>
+                        <p><a title="Change my password" href="/accounts/password/change/">Change my password</a></p>
+                    </td>
+                {% endifnotequal %}
+            </tr>
+        </table>
+
+    </div>
+
+
+    {% ifequal request.user target_user %}
+        <div class="details_box{% if not groups %} collapsed{% endif %}">
+            <a href="#" class="details_header blue"><div class="details_title"><table><tbody><tr><td class="details_icon">{% if not groups %}+{% else %}-{% endif %}</td><td>My groups</td></tr></tbody></table></div></a>
+            <div class="content blue" {% if not groups %}style="display: none;"{% endif %}>
+                <p class="explanation">If you are a teacher and want to supervise a group of students working on the MASH platform,
+                                       you can create one or several group(s) here.</p>
+                <p class="tools"><a title="Create a new group" href="#" onclick="return createGroup();">Create a new group</a></p>
+
+                <div id="groups_list" {% if not groups %}style="display: none"{% endif %}>
+                    <table cellspacing="1">
+                        <thead>
+                            <th>NAME</th>
+                            <th># MEMBERS</th>
+                            <th># PENDING MEMBERS</th>
+                            <th>TOOLS</th>
+                        </thead>
+                        <tbody id="groups_list_target">
+                            {% for group in groups %}
+                                <tr id="group_{{ group.group_id }}" class="{% cycle 'row1' 'row2' %}">
+                                    <td class="name">{{ group.group_name }}</td>
+                                    <td class="members">{{ group.nb_members }}</td>
+                                    <td class="pending_members">{{ group.nb_pending_members }}</td>
+                                    <td class="tools">
+                                        <a href="/forum/ucp.php?i=groups&mode=manage&action=edit&g={{ group.group_id }}">Settings</a>
+                                        <a href="/forum/ucp.php?i=groups&mode=manage&action=list&g={{ group.group_id }}">Manage members</a>
+                                        <a href="#" onclick="return deleteGroup('{{ group.group_name }}', {{ group.group_id }});">Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endifequal %}
+
+
+    {% if html_heuristic_error_reports %}
+        <div class="details_box">
+            <a href="#" class="details_header blue"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Heuristic error reports</td></tr></tbody></table></div></a>
+            <div class="content blue">
+                <p class="explanation">Due to the following errors, these heuristics will not be useable anymore!</p>
+                <p class="explanation">Please fix the problem, and upload a new version of these heuristics.</p>
+                {{ html_heuristic_error_reports|safe }}
+            </div>
+        </div>
+    {% endif %}
+
+
+    {% if html_classifier_error_reports %}
+        <div class="details_box">
+            <a href="#" class="details_header blue"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Classifier error reports</td></tr></tbody></table></div></a>
+            <div class="content blue">
+                <p class="explanation">Due to the following errors, these classifiers will not be useable anymore!</p>
+                <p class="explanation">Please fix the problem, push a new version of these classifiers in the GIT repository and notify the administrators about it.</p>
+                {{ html_classifier_error_reports|safe }}
+            </div>
+        </div>
+    {% endif %}
+
+
+    {% if html_goalplanner_error_reports %}
+        <div class="details_box">
+            <a href="#" class="details_header blue"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Goal-planners error reports</td></tr></tbody></table></div></a>
+            <div class="content blue">
+                <p class="explanation">Due to the following errors, these goal-planners will not be useable anymore!</p>
+                <p class="explanation">Please fix the problem, push a new version of these goal-planners in the GIT repository and notify the administrators about it.</p>
+                {{ html_goalplanner_error_reports|safe }}
+            </div>
+        </div>
+    {% endif %}
+
+
+    {% if html_instrument_error_reports %}
+        <div class="details_box">
+            <a href="#" class="details_header blue"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Instruments error reports</td></tr></tbody></table></div></a>
+            <div class="content blue">
+                <p class="explanation">Due to the following errors, these instruments will not be useable anymore!</p>
+                <p class="explanation">Please fix the problem, push a new version of these instruments in the GIT repository and notify the administrators about it.</p>
+                {{ html_instrument_error_reports|safe }}
+            </div>
+        </div>
+    {% endif %}
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+        	$('.details_box .details_header').click(function() {
+        		var iconElement = $(this).find('.details_icon');
+        		var details_box = $(this).closest('.details_box');
+
+        		var text = iconElement.text();
+        		if (text == '+')
+        		{
+        		    iconElement.text('-');
+        		    details_box.removeClass('collapsed');
+        		}
+        		else
+        		{
+        		    iconElement.text('+');
+        		    details_box.addClass('collapsed');
+        		}
+
+        		$(this).next().slideToggle('fast');
+
+        		return false;
+        	});
+
+{% if html_heuristic_error_reports or html_classifier_error_reports or html_goalplanner_error_reports or html_instrument_error_reports %}
+            setupStackTraces();
+{% endif %}
+    	});
+
+</script>
+
+<script type="text/javascript">
+
+$(window).load(function(){
+        //if no cookie is stored so create a cookie
+        if($.cookie('robot_uid') == null)
+        {
+            //no cookie stored in browser
+        }
+        else
+        {
+            //cookie already stored in browser: overwrite it
+            $.cookie('robot_uid','REGISTERED_USER', { path: '/' });
+        }
+
+});
+
+
+</script>
+
+{% endblock content %}

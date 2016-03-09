@@ -1,0 +1,51 @@
+<div class="container">
+    <a id="back_button" href="#" onclick="return back_to_sequences();">&lt;&lt; All sequences</a>
+
+    <span id="sequence_title"></span>
+    <span id="sequence_description"></span>
+
+    <div class="text_center">
+        <span id="sequence_score" class="success"></span>
+        <img id="sequence_obsolete" src="/images/warning.gif" class="obsolete"
+             title="One or more heuristics were changed since this test was performed" />
+        <span id="sequence_status" class="inprogress"></span>
+    </div>
+
+    <img id="sequence_progress" src="/images/progress.gif" style="display: none; margin-top: 5px; width: 16px;"/>
+    <span id="sequence_infos"></span>
+
+    {% if heuristic_list %}
+        <div id="heuristic_selection_box">
+            <span>Select a heuristic:</span>
+            <select id="heuristic_list">
+                {% for version in heuristic_list %}
+                    <option value="{{ version.id }}">{{version.heuristic.name}}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="Log data" onclick="return record_data();"/>
+        </div>
+    {% endif %}
+    {% if tutorial_mode %}
+        <div id="heuristic_selection_box">
+            <span>Select a heuristic:</span>
+            <select id="heuristic_list">
+                    <option value="83">tutorial_center_red</option>
+            </select>
+            <input type="submit" value="Log data" onclick="return record_data();"/>
+        </div>
+    {% endif %}
+
+    <span id="sequence_error"></span>
+
+    <div class="text_center">
+        <span id="sequence_heuristic"></span>
+        <img id="recorded_data_obsolete" src="/images/warning.gif" class="obsolete"
+             title="The heuristic was changed since this data was recorded" />
+    </div>
+
+    <img id="recorded_data_progress" src="/images/progress.gif" />
+
+    <a id="sequence_view_more" href="#" onclick="return false;" class="more">View more</a>
+    <a id="sequence_view_all" href="#" onclick="return false;" class="more">View all</a>
+
+</div>

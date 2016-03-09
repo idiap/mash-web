@@ -1,0 +1,42 @@
+USE mash;
+
+
+INSERT INTO `experiments_setting` (`name`, `value`, `configuration_id`) VALUES
+('EXPERIMENT_SETUP/TRAINING_SAMPLES', '0.5', 191),
+('EXPERIMENT_SETUP/DATABASE_NAME', 'mnist', 191),
+('EXPERIMENT_SETUP/LABELS', '0 1 2 3 4 5 6 7 8 9', 191),
+('EXPERIMENT_SETUP/ROI_SIZE', '29', 191),
+('EXPERIMENT_SETUP/BACKGROUND_IMAGES', 'OFF', 191),
+('USE_PREDICTOR', 'cdubout/perceptron', 191),
+('EXPERIMENT_SETUP/TRAINING_SAMPLES', '0.5', 194),
+('EXPERIMENT_SETUP/DATABASE_NAME', 'caltech-256', 194),
+('EXPERIMENT_SETUP/LABELS', '61 161 100 122 5 20 200 150 190 210 180 75 45 92 33 145 176 205 240 201', 194),
+('EXPERIMENT_SETUP/ROI_SIZE', '127', 194),
+('EXPERIMENT_SETUP/BACKGROUND_IMAGES', 'OFF', 194),
+('USE_PREDICTOR', 'cdubout/adaboost', 194);
+
+
+
+INSERT INTO `experiments_configurationseed` (`configuration_id`, `conf_seed`) VALUES
+(191,1),
+(191,2),
+(191,3),
+(191,4),
+(191,5),
+(191,6),
+(191,7),
+(191,8),
+(191,9),
+(191,10),
+(194,1),
+(194,2),
+(194,3),
+(194,4),
+(194,5),
+(194,6),
+(194,7),
+(194,8),
+(194,9),
+(194,10);
+
+

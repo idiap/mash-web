@@ -1,0 +1,25 @@
+{% load assign %}
+
+{% for heuristic in heuristics %}
+    
+    {% assign rowclass "" %}
+    {% assign title1 "" %}
+    {% assign title2 "" %}
+    {% assign title3 "" %}
+
+    {% ifequal heuristic.latest_public_version.status 'DIS' %}
+        {% assign rowclass "error" %}
+        {% assign title1 "The heuristic '" %}
+        {% assign title2 heuristic.latest_public_version.fullname %}
+        {% assign title3 "' has been disabled, due to an error" %}
+    {% endifequal %}
+
+    <tr class="{% cycle 'row1' 'row2' %} {{ rowclass }}" title="{{ title1 }}{{ title2 }}{{ title3 }}">
+        <td class="username"><a href="/accounts/profile/{{ heuristic.author.id }}">{{ heuristic.author.username }}</a></td>
+        <td class="name"><a href="/heuristics/v{{ heuristic.latest_public_version.id }}">{{ heuristic.latest_public_version.shortname }}</a></td>
+        <td class="rank">{% if heuristic.latest_public_version.rank %}{{ heuristic.latest_public_version.rank }}{% else %}-{% endif %}</td>
+        <td class="versions">{{ heuristic.visible_versions_count }}</td>
+        <td class="description">{% if heuristic.short_description %}{{ heuristic.short_description }}{% else %}&nbsp;{% endif %}</td>
+        <td class="date">{{ heuristic.latest_public_version.upload_date|date:"N j, Y, P" }}</td>
+    </tr>
+{% endfor %}

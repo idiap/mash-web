@@ -1,0 +1,55 @@
+{% load assign %}
+
+{% for version in versions %}
+    
+    {% assign rowclass "" %}
+    {% assign title1 "" %}
+    {% assign title2 "" %}
+    {% assign title3 "" %}
+
+    {% if version.test_status.error %}
+        {% assign rowclass "error" %}
+        {% assign title1 "The heuristic '" %}
+        {% assign title2 version.fullname %}
+        {% assign title3 "' didn't pass the tests" %}
+    {% else %}
+        {% ifequal version.status 'DIS' %}
+            {% assign rowclass "error" %}
+            {% assign title1 "The heuristic '" %}
+            {% assign title2 version.fullname %}
+            {% assign title3 "' has been disabled, due to an error" %}
+        {% endifequal %}
+    {% endif %}
+
+
+    <tr class="{% cycle 'row1' 'row2' %} {{ rowclass }}" title="{{ title1 }}{{ title2 }}{{ title3 }}">
+        <td class="versions">
+            <a href="/heuristics/v{{ version.id }}">{{ version.version }}</a>
+            {% if mode.can_diff %}
+                <a class="select" href="/heuristics/diff/?vn={{ version.id }}&vo={{ configuration.heuristic_version.id }}">[diff]</a>
+            {% endif %}
+        </td>
+
+        <td class="rank">{% if version.rank %}{{ version.rank }}{% else %}-{% endif %}</td>
+
+        {% if mode.can_display_accessibility %}
+            <td class="accessibility">{% if version.public %}Public{% else %}Private{% endif %}</td>
+        {% endif %}
+
+        <td class="date">{{ version.upload_date|date:"N j, Y, P" }}</td>
+
+        {% if mode.can_display_tools %}
+            <td class="tools tools2">
+                {% if not version.public %}
+                    <span class="tool"><a class="delete" title="Delete this version of the heuristic" href="/heuristics/delete/{{ version.id }}/" onclick="return confirm_heuristic_deletion(this);"></a></span>
+
+                    {% if version.checked %}
+                        <span class="tool"><a class="publish" title="Publish this version of the heuristic" href="/heuristics/publish/{{ version.id }}/" onclick="return choose_heuristic_publication_delay(this);"></a></span>
+                    {% endif %}
+                {% else %}
+                -
+                {% endif %}
+            </td>
+        {% endif %}
+    </tr>
+{% endfor %}

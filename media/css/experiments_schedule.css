@@ -1,0 +1,355 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the experiment scheduling pages
+*
+*******************************************************************************/
+
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+    font-size: 14px;
+}
+
+
+h2.title
+{
+    font-size: 16px;
+    font-weight: bold;
+    color: #007000;
+    margin-top: 5px;
+    text-align: center;
+}
+
+
+div.task_menu
+{
+    line-height: 1em;
+    font-family: Arial;
+    font-size: 14px;
+    width: 100%;
+    height: 22px;
+}
+
+div.task_menu ul
+{
+    list-style: none outside none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+
+div.task_menu ul li
+{
+    float: left;
+    list-style: none outside none;
+    margin: 0;
+    padding: 0;
+}
+
+
+div.task_menu ul li a
+{
+    background-color: #B6DE9F;
+    color: #007000;
+    float: left;
+    height: 12px;
+    margin: 0 1px;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-radius: 12px 12px 0 0;
+    -moz-border-radius: 12px 12px 0 0;
+    -webkit-border-radius: 12px 12px 0 0;
+}
+
+
+div.task_menu ul li.first a
+{
+    margin-left: 0;
+}
+
+
+div.task_menu ul li.active a
+{
+    font-weight: bold;
+    background-color: #CEF6B5;
+}
+
+
+div.infos_box
+{
+    color: #000000;
+    font-family: Arial;
+    background-color: #CEF6B5;
+    padding: 4px 10px 10px 10px;
+    border-radius: 0 12px 12px 12px;
+    -moz-border-radius: 0 12px 12px 12px;
+    -webkit-border-radius: 0 12px 12px 12px;
+}
+
+
+form#configuration
+{
+    font-size: 14px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 60%;
+}
+
+
+form#configuration fieldset
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+
+form#configuration dl
+{
+    margin-top: 16px;
+    margin-bottom: 0px;
+}
+
+
+form#configuration dt
+{
+    display: block;
+    float: left;
+    width: 9em;
+}
+
+
+form#configuration dd
+{
+    margin-left: 9em;
+}
+
+
+form#configuration dd.spaced
+{
+    margin-top: 8px;
+}
+
+
+form#configuration dd.left-aligned input
+{
+    width: auto;
+    margin-left: 0;
+}
+
+
+form#configuration dd.list_tools
+{
+    width: 200px;
+    height: 1.3em;
+}
+
+
+form#configuration dd.list_tools_heuristics
+{
+    height: 1.1em;
+    margin-top: 2px;
+    margin-bottom: 6px;
+}
+
+
+form#configuration dd.list_tools.small
+{
+    height: 1.1em;
+}
+
+
+form#configuration dl.heuristics_selection
+{
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 12px;
+}
+
+
+form#configuration dl.heuristics_selection dd
+{
+    margin-left: 0;
+}
+
+
+form#configuration dl.heuristics_selection dd.spaced
+{
+    margin-top: 8px;
+}
+
+
+form#configuration dl.heuristics_selection_tools
+{
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 12px;
+    width: 75px;
+}
+
+
+form#configuration dl.heuristics_selection_tools dd
+{
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+
+form#configuration dl.heuristics_selection_tools dd.hspace
+{
+    margin-top: 150px;
+}
+
+
+form#configuration dl.heuristics_selection dd.filterbox
+{
+    margin-top: 4px;
+}
+
+
+form#configuration dl.heuristics_selection dd.filterbox span
+{
+    margin-right: 2px;
+}
+
+
+form#configuration dl.heuristics_selection dd.filterbox input
+{
+    border: 1px solid #888888;
+    background-color: #FFFFFF;
+    width: 13em;
+    background-image: url(/images/icon_textbox_search.gif);
+    background-position: left 1px;
+    background-repeat: no-repeat;
+    padding-left: 17px;
+    padding-right: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+
+form#configuration dl.heuristics_selection dd.filterbox input.blurred
+{
+    color: #888888;
+}
+
+
+form#configuration span
+{
+    color: #000000;
+}
+
+
+form#configuration span.help
+{
+    color: #707070;
+    font-size: 12px;
+}
+
+
+form#configuration span.error
+{
+    color: #FF0000;
+    font-size: 14px;
+}
+
+
+form#configuration dd.list_tools span
+{
+    font-size: 12px;
+}
+
+
+form#configuration dd.list_tools a,
+form#configuration dd.list_tools_heuristics a
+{
+    font-size: 12px;
+    float: right;
+    text-decoration: none;
+}
+
+
+form#configuration select.hidden
+{
+    display: none;
+}
+
+
+form#configuration select
+{
+    border: 1px solid #888888;
+    width: 200px;
+}
+
+
+form#configuration select.filtered
+{
+    background-color: #EEEEEE;
+}
+
+
+form#configuration select.disabled
+{
+    background-color: #CCCCCC;
+    color: #555555;
+}
+
+
+form#configuration input
+{
+    border: 1px solid #888888;
+    width: 200px;
+}
+
+
+form#configuration ul
+{
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+    padding: 0px;
+    margin-left: 0px;
+}
+
+
+form#configuration ul li
+{
+    margin-left: 0px;
+}
+
+
+form#configuration ul input
+{
+    margin-left: 0px;
+}
+
+
+form#configuration ul.errorlist
+{
+    color: #FF0000;
+}
+
+
+form#configuration div.buttons
+{
+    margin-top: 20px;
+    margin-left: 12em;
+}
+
+
+form#configuration input.button
+{
+    border: 1px solid #B0B0B0;
+    background-color: #FAFAFA;
+    background-image: url(/images/bg_button.gif);
+    color: #000000;
+    padding: 1px 10px;
+    width: auto;
+    text-decoration: none;
+    font-size: 0.9em;
+    text-align:center;
+    margin-right: 4px;
+}

@@ -1,0 +1,358 @@
+{% extends "experiments/base_experiments.html" %}
+
+{% block title %}{{ block.super }} - Experiment {{ experiment.name }}{% endblock %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/experiments_details.css" />
+    <link rel="stylesheet" href="/css/jquery.alerts.css" />
+    <link rel="stylesheet" href="/css/details_box.css" />
+    <link rel="stylesheet" href="/css/snippets.css" />
+
+    {% for stylesheet in snippets_css_files %}
+        <link rel="stylesheet" href="{{ stylesheet }}" />
+    {% endfor %}
+
+    {% if html_predictor_error_report %}
+        <link rel="stylesheet" href="/css/tools_error_report.css" />
+    {% endif %}
+
+    {% include "instruments/snippets_generation.html" %}
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="/js/jquery.js" type="text/javascript"></script>
+    <script src="/js/jquery-ui.js" type="text/javascript"></script>
+    <script src="/js/jquery.alerts.js" type="text/javascript"></script>
+
+    {% for script in snippets_js_files %}
+        <script type="text/javascript" src="{{ script }}"></script>
+    {% endfor %}
+
+    {% if html_predictor_error_report %}
+        {% include "tools/scripts_error_report.html" %}
+    {% endif %}
+
+
+    <script type="text/javascript">
+
+    {% if not experiment.isPublic %}
+        {% ifequal experiment.user request.user %}
+
+            {% if experiment.isScheduled %}
+
+                function confirm_experiments_cancellation(target_link)
+                {
+                    $.alerts.okButton = "Yes, I'm sure";
+                    $.alerts.cancelButton = "No, don't cancel it";
+
+                    jConfirm('{{ text_cancellation_confirmation|safe|addslashes }}', 'Please confirm your choice: cancel this experiment', function(r) {
+                        if (r)
+                        {
+                            window.location = target_link.href;
+                        }
+                    });
+
+                    return false;
+                }
+
+            {% endif %}
+
+            {% if experiment.isDone %}
+
+                function confirm_experiments_deletion(target_link)
+                {
+                    $.alerts.okButton = "Yes, I'm sure";
+                    $.alerts.cancelButton = "No, don't delete it";
+
+                    jConfirm('{{ text_deletion_confirmation|safe|addslashes }}', 'Please confirm your choice: delete this experiment', function(r) {
+                        if (r)
+                        {
+                            window.location = target_link.href;
+                        }
+                    });
+
+                    return false;
+                }
+
+            {% endif %}
+
+        {% endifequal %}
+    {% endif %}
+
+    </script>
+{% endblock scripts %}
+
+
+{% block content %}
+
+    <div class="infos_box">
+        <div class="tools">
+            <p class="name">{% if experiment.isConsortium %}{{ experiment.user.username|lower }}/{% endif %}{{ experiment.name }}</p>
+
+            {% if not experiment.isPrivate %}
+                {% if not request.user.is_anonymous %}
+                    {% if experiment.post %}
+                        <span class="tool"><a class="forum" title="Talk about this experiment on the forum" href="/experiments/topic/{{ experiment.id }}/"></a></span>
+                    {% else %}
+                        <span class="tool"><a class="forum_no_comment" title="Talk about this experiment on the forum (no comment yet)" href="/experiments/topic/{{ experiment.id }}/"></a></span>
+                    {% endif %}
+                {% else %}
+                    {% if experiment.post %}
+                        <span class="tool"><a class="forum" title="Talk about this experiment on the forum" href="/experiments/topic/{{ experiment.id }}/"></a></span>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+
+            {% if experiment.isConsortium or experiment.isPrivate %}
+                {% ifequal experiment.user request.user %}
+                    {% if experiment.isScheduled %}
+                        <span class="tool"><a class="cancel" title="Cancel this experiment" href="/experiments/cancel/{{ experiment.id }}/" onclick="return confirm_experiments_cancellation(this);"></a></span>
+                    {% endif %}
+                    {% if experiment.isDone %}
+                        <span class="tool"><a class="delete" title="Delete this experiment" href="/experiments/delete/{{ experiment.id }}/" onclick="return confirm_experiments_deletion(this);"></a></span>
+                    {% endif %}
+                {% endifequal %}
+            {% endif %}
+
+            {% if experiment.isPublic %}
+                {% if not request.user.is_anonymous %}
+                    {% if request.user.get_profile.project_member %}
+                        <span class="tool"><a class="copy" title="Schedule a new consortium experiment based on this one" href="/experiments/schedule/consortium/?ref={{ experiment.id }}"></a></span>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+
+            {% if experiment.isConsortium %}
+                <span class="tool"><a class="copy" title="Schedule a new consortium experiment based on this one" href="/experiments/schedule/consortium/?ref={{ experiment.id }}"></a></span>
+                {% endif %}
+
+            {% if experiment.isPrivate %}
+                <span class="tool"><a class="copy" title="Schedule a new private experiment based on this one" href="/experiments/schedule/private/?ref={{ experiment.id }}"></a></span>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <p class="title">Infos</p>
+            <dl>
+                <dt>Task:</dt>
+                <dd>{{ experiment.configuration.task.type_name }}</dd>
+                <dt>Type:</dt>
+                {% ifequal experiment.configuration.experiment_type "PUBL" %}
+                    <dd>Public experiment <a href="/experiments/">(see all public experiments)</a></dd>
+                {% endifequal %}
+                {% ifequal experiment.configuration.experiment_type "PRIV" %}
+                    <dd>Private experiment <a href="/experiments/private/">(see all your private experiments)</a></dd>
+                {% endifequal %}
+                {% ifequal experiment.configuration.experiment_type "EVAL" %}
+                    <dd>Evaluation of the heuristic <a href="/heuristics/v{{ experiment.evaluation_results.heuristic_version.id }}/">{{ experiment.evaluation_results.heuristic_version.fullname }}</a></dd>
+                {% endifequal %}
+                {% ifequal experiment.configuration.experiment_type "SIGN" %}
+                    <dd>Recording of the signature of the heuristic <a href="/heuristics/v{{ experiment.signature.heuristic_version.id }}/">{{ experiment.signature.heuristic_version.fullname }}</a></dd>
+                {% endifequal %}
+                {% ifequal experiment.configuration.experiment_type "CONS" %}
+                    <dd>Consortium experiment scheduled by <a href="/accounts/profile/{{ experiment.user.id }}">{{ experiment.user.username }}</a> <a href="/experiments/consortium/">(see all consortium experiments)</a></dd>
+                {% endifequal %}
+                {% ifequal experiment.configuration.experiment_type "CBAS" %}
+                    {% if experiment.contest %}
+                        <dd>Base experiment of the contest <a href="/contests/{{ experiment.contest.id }}/">{{ experiment.contest.name }}</a></dd>
+                    {% else %}
+                        <dd>Base experiment for a future contest</dd>
+                    {% endif %}
+                {% endifequal %}
+                {% ifequal experiment.configuration.experiment_type "CENT" %}
+                    <dd>Entry of the heuristic <a href="/heuristics/v{{ experiment.contest_entry.heuristic_version.id }}/">{{ experiment.contest_entry.heuristic_version.fullname }}</a> in the contest <a href="/contests/{{ experiment.contest_entry.contest.id }}/">{{ experiment.contest_entry.contest.name }}</a></dd>
+                {% endifequal %}
+
+                <dt>Status:</dt>
+                {% if experiment.isScheduled %}
+                    <dd><span class="scheduled">{{ experiment.status_text }}</span></dd>
+                {% else %}
+                    {% if experiment.isRunning %}
+                        <dd><span class="running">{{ experiment.status_text }}</span></dd>
+                    {% else %}
+                        {% if experiment.isFailed %}
+                            <dd><span class="failed">{{ experiment.status_text }}</span></dd>
+                        {% else %}
+                            {% if experiment.isDoneWithErrors %}
+                                <dd><span class="done_with_errors">{{ experiment.status_text }}</span></dd>
+                            {% else %}
+                                {% if experiment.isDoneWithErrors %}
+                                    <dd><span class="done_with_errors">{{ experiment.status_text }}</span></dd>
+                                {% else %}
+                                    <dd><span class="done">{{ experiment.status_text }}</span></dd>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+
+                <dt>Creation date:</dt>
+                <dd>{{ experiment.creation_date|date:"N j, Y, P" }}</dd>
+
+                <dt>Start date:</dt>
+                <dd>{% if experiment.start %}{{ experiment.start|date:"N j, Y, P" }}{% else %}-{% endif %}</dd>
+
+                <dt>Duration:</dt>
+                <dd>{% if experiment.end %}{{ experiment.stringDuration|safe }}{% else %}-{% endif %}</dd>
+            </dl>
+        </div>
+
+        {% if database_box_content %}
+            <div class="section">
+                <p class="title">Database</p>
+                {{ database_box_content|safe }}
+            </div>
+        {% endif %}
+
+        {% if goalplanning_task_box_content %}
+            <div class="section">
+                <p class="title">Task</p>
+                {{ goalplanning_task_box_content|safe }}
+            </div>
+        {% endif %}
+
+        {% if predictor_box_content %}
+            <div class="section">
+                <p class="title">{% ifequal experiment.configuration.task.type "gp" %}Goal-planner{% else %}Classifier{% endifequal %}</p>
+                {{ predictor_box_content|safe }}
+            </div>
+        {% endif %}
+
+        {% if heuristics_box_content %}
+            <div class="section">
+                <p class="title">Heuristics</p>
+                {{ heuristics_box_content|safe }}
+            </div>
+        {% endif %}
+
+        {% if results_box_content %}
+            <div class="section">
+                <p class="title">Results</p>
+                {{ results_box_content|safe }}
+            </div>
+        {% endif %}
+    </div>
+
+
+    {% if html_predictor_error_report %}
+        <div class="details_box">
+            <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Predictor error report</td></tr></tbody></table></div></a>
+            <div class="content green">
+                <p class="explanation">Due to the following errors, the experiment can't be performed. This predictor will not be useable anymore until a new version is released. At this point, this experiment will be automatically scheduled again. Its author was notified.</p>
+                {{ html_predictor_error_report|safe }}
+            </div>
+        </div>
+    {% endif %}
+
+
+    {% if problematic_heuristics %}
+        <div class="details_box">
+            <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Heuristics error reports</td></tr></tbody></table></div></a>
+            <div class="content green">
+                {% if problematic_heuristics|length_is:"1" %}
+                    <p class="explanation">The following heuristic had problems during the experiment. In consequence, it was not used and was disabled. Its author was notified.</p>
+                {% else %}
+                    <p class="explanation">The following heuristics had problems during the experiment. In consequence, they were not used and were disabled. Their authors were notified.</p>
+                {% endif %}
+                <ul>
+                {% for heuristic_version in problematic_heuristics %}
+                    <li><a href="/heuristics/v{{ heuristic_version.id }}/">{{ heuristic_version.fullname }}</a></li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+
+
+    {% if problematic_instruments %}
+        <div class="details_box">
+            <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Instruments error reports</td></tr></tbody></table></div></a>
+            <div class="content green">
+                {% if problematic_instruments|length_is:"1" %}
+                    <p class="explanation">The following instrument had problems during the experiment. In consequence, it was not used and was disabled. Its author was notified.</p>
+                {% else %}
+                    <p class="explanation">The following instruments had problems during the experiment. In consequence, they were not used and were disabled. Their authors were notified.</p>
+                {% endif %}
+                <ul>
+                {% for instrument in problematic_instruments %}
+                    <li>{{ instrument.fullname }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+
+
+    {% for snippet in snippets %}
+        <div class="details_box collapsed">
+            <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">+</td><td>{{ snippet.view.title }}</td>{% ifnotequal snippet.status "AVA" %}<td id="{{ snippet.container_id }}_progress"><img class="miniprogress" src="/images/progress.gif" /></td>{% endifnotequal %}</tr></tbody></table></div></a>
+            <div id="{{ snippet.container_id }}" class="content green snippet" style="display: none;">
+                {% ifequal snippet.status "AVA" %}
+                    {{ snippet.content|safe }}
+                {% else %}
+                    <img class="progress" src="/images/progress.gif" />
+                    <p class="progress">Generation in progress...</p>
+                {% endifequal %}
+            </div>
+        </div>
+    {% endfor %}
+
+
+    {% if log_files %}
+        <div class="details_box">
+            <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>Log files</td></tr></tbody></table></div></a>
+            <div class="content green">
+                <ul>
+                {% for log_file in log_files %}
+                    <li><a href="/logs/{{ log_file.id }}/">{{ log_file.file }}</a></li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+            $('.details_box .details_header').click(function() {
+                var iconElement = $(this).find('.details_icon');
+                var details_box = $(this).closest('.details_box');
+
+                var text = iconElement.text();
+                if (text == '+')
+                {
+                    iconElement.text('-');
+                    details_box.removeClass('collapsed');
+                }
+                else
+                {
+                    iconElement.text('+');
+                    details_box.addClass('collapsed');
+                }
+
+                $(this).next().slideToggle('fast');
+
+                return false;
+            });
+
+{% if html_predictor_error_report %}
+            setupStackTraces();
+{% endif %}
+
+            {% for snippet in snippets %}
+                {% ifequal snippet.status "AVA" %}
+                    if (typeof({{ snippet.view.js_start_function }}) != "undefined")
+                        {{ snippet.view.js_start_function }}();
+                {% else %}
+                    getSnippet({{ snippet.id }});
+                {% endifequal %}
+            {% endfor %}
+        });
+
+    </script>
+
+{% endblock content %}

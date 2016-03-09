@@ -1,0 +1,150 @@
+{% extends "heuristics/base_heuristics_aligned.html" %}
+
+{% block title %}{{ block.super }} - Edition of heuristic '{% ifequal request.user heuristic.author %}{{ heuristic.name }}{% else %}{{ heuristic.fullname }}{% endifequal %}'{% endblock %}
+
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/heuristics_edition.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    <script type="text/javascript">
+    
+        function find_heuristic(url)
+        {
+            window.open(url, '_heuristicsearch', 'height=570,resizable=yes,scrollbars=yes,width=1024');
+            return false;
+        }
+    
+        function insert_heuristic(version_id, heuristic_id, heuristic_name)
+        {
+            var hidden_inspirations_list = document.getElementById('id_inspirations_list');
+            var inspiration_list_error = document.getElementById('inspiration_list_error');
+
+            if (heuristic_id == {{ heuristic.id }})
+            {
+                inspiration_list_error.innerHTML = "A heuristic can't inspire itself";
+                inspiration_list_error.className = 'error';
+                return;
+            }
+
+            if (hidden_inspirations_list.value.search(';' + heuristic_id + ';') >= 0)
+            {
+                inspiration_list_error.innerHTML = "The heuristic '<i>" + heuristic_name + "</i>' is already in the list";
+                inspiration_list_error.className = 'error';
+                return;
+            }
+
+            inspiration_list_error.innerHTML = '';
+            inspiration_list_error.className = 'error hidden';
+
+            hidden_inspirations_list.value += heuristic_id + ';';
+
+            var inspiration_list = document.getElementById('inspiration_list');
+            var insert_point = document.getElementById('inspiration_insert_point');
+            
+            var dd = document.createElement('dd');
+            dd.id = 'inspiration_' + heuristic_id;
+            
+            var a1 = document.createElement('a');
+            a1.href = '/heuristics/' + heuristic_id + '/';
+            a1.className = 'heuristic_link';
+            a1.target = '_blank';
+
+            var a2 = document.createElement('a');
+            a2.href = '#';
+            a2.className = 'delete';
+            a2.title = 'Remove this heuristic from the list';
+            a2.onclick = function() { remove_heuristic(heuristic_id); return false; }
+
+            var t = document.createTextNode(heuristic_name);
+
+            a1.appendChild(t);
+
+            dd.appendChild(a1);
+            dd.appendChild(a2);
+
+            inspiration_list.insertBefore(dd, insert_point);
+        }
+        
+        function remove_heuristic(heuristic_id)
+        {
+            var hidden_inspirations_list = document.getElementById('id_inspirations_list');
+            var inspiration_list_error = document.getElementById('inspiration_list_error');
+
+            if (hidden_inspirations_list.value.search(';' + heuristic_id + ';') < 0)
+            {
+                inspiration_list_error.innerHTML = "The heuristic '<i>" + heuristic_name + "</i>' isn't in the list";
+                inspiration_list_error.className = 'error';
+                return;
+            }
+
+            inspiration_list_error.innerHTML = '';
+            inspiration_list_error.className = 'error hidden';
+
+            hidden_inspirations_list.value = hidden_inspirations_list.value.replace(';' + heuristic_id + ';', ';');
+
+            var inspiration_list = document.getElementById('inspiration_list');
+            var dd = document.getElementById('inspiration_' + heuristic_id);
+            
+            inspiration_list.removeChild(dd);
+        }
+        
+    </script>
+{% endblock scripts %}
+
+
+{% block content %}
+
+    <h2>Edition of the heuristic '{% ifequal request.user heuristic.author %}{{ heuristic.name }}{% else %}{{ heuristic.fullname }}{% endifequal %}'</h2>
+
+    <form id="details" method="post" action="/heuristics/edit/{{ heuristic.id }}/" enctype="multipart/form-data">
+        <fieldset>
+            <dl>
+                <dt></dt>
+                <dd>{{ form.heuristic_id }}</dd>
+            </dl>
+
+            {% if not heuristic.last_public_version %}
+                <dl>
+                    <dt>{{ form.name.label_tag }}:</dt>
+                    <dd>{{ form.name }}</dd>
+                    <dd><span class="help">{{ form.name.help_text }}</span></dd>
+                    <dd>{{ form.errors.name }}</dd>
+                </dl>
+            {% endif %}
+
+            <dl>
+                <dt>{{ form.summary.label_tag }}:</dt>
+                <dd>{{ form.summary }}</dd>
+                <dd><span class="help">{{ form.summary.help_text }}</span></dd>
+                <dd>{{ form.errors.summary }}</dd>
+            </dl>
+
+            <dl>
+                <dt>{{ form.description.label_tag }}:</dt>
+                <dd>{{ form.description }}</dd>
+                <dd><span class="help">{{ form.description.help_text }}</span></dd>
+                <dd>{{ form.errors.description }}</dd>
+            </dl>
+
+            <dl id="inspiration_list">
+                <dt>Inspired by:</dt>
+                <dd>{{ form.inspirations_list }}</dd>
+                {% for inspiration in heuristic.inspiration_heuristics %}
+                    <dd id="inspiration_{{ inspiration.id }}"><a class="heuristic_link" href="/heuristics/{{ inspiration.id }}" target="_blank">{{ inspiration.fullname }}</a><a class="delete" href="#" onclick="remove_heuristic({{ inspiration.id }}); return false;" title="Remove this heuristic from the list"></a></dd>
+                {% endfor %}
+                <dd id="inspiration_insert_point"><span class="help">Add a heuristic that inspired you here</span><a class="add" href="/heuristics/search/" onclick="find_heuristic(this.href); return false;"></a></dd>
+                <dd><span id="inspiration_list_error" class="error hidden"></span></dd>
+            </dl>
+        </fieldset>
+
+        <div class="buttons">
+            <input name="submit" class="button" type="submit" value="Save" />
+            <input name="submit" class="button" type="submit" value="Cancel" />
+        </div>
+    </form>
+
+{% endblock content %}

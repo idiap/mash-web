@@ -1,0 +1,32 @@
+<div id="topbar">
+    <a href="{{ urls_prefix }}/"><img id="mash_logo" alt="MASH logo" src="{{ urls_prefix }}/images/logo-mash-2.png" /></a>
+    <a href="{{ urls_prefix }}/"><img id="mash_logo_text" alt="MASH logo" src="{{ urls_prefix }}/images/logo-mash-text-2.png" /></a>
+
+    <div id="login_infos">
+        <!-- IF S_USER_LOGGED_IN -->
+            <span>Logged in as <a id="username" href="{{ urls_prefix }}/accounts/profile">{S_USERNAME}</a> | 
+                <!-- IF S_USER_UNREAD_PRIVMSG == 0 -->
+                    <a id="inbox" class="empty" href="/forum/ucp.php?i=pm&folder=inbox">Inbox (0)</a> | 
+                <!-- ELSE -->
+                    <a id="inbox" class="not-empty" href="/forum/ucp.php?i=pm&folder=inbox">Inbox ({S_USER_UNREAD_PRIVMSG})</a> | 
+                <!-- ENDIF -->
+                <!-- IF S_USER_LOGGED_IN --><a href="{{ urls_prefix }}/admin">Admin</a> | <!-- ENDIF -->
+                <a href="{{ urls_prefix }}/accounts/logout">Logout</a>
+            </span>
+        <!-- ELSE -->
+            <span><a href="{{ urls_prefix }}/accounts/login">Login</a> | <a class="last" href="{{ urls_prefix }}/accounts/register">Register</a></span>
+        <!-- ENDIF -->
+    </div>
+
+    <div id="menu">
+        <!-- IF S_USER_LOGGED_IN -->
+            <!-- IF U_ACP -->
+                {{ admin_menu|safe }}
+            <!-- ELSE -->
+                {{ logged_menu|safe }}
+            <!-- ENDIF -->
+        <!-- ELSE -->
+            {{ anonymous_menu|safe }}
+        <!-- ENDIF -->
+    </div>
+</div>

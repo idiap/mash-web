@@ -1,0 +1,1066 @@
+{% extends "factory/base_factory.html" %}
+{% load assign %}
+
+
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="/css/heuristics_check.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super  }}
+
+    <script src="/js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/js/ace/theme-textmate.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/js/ace/mode-c_cpp.js" type="text/javascript" charset="utf-8"></script>
+
+    <script type="text/javascript">
+    $(window).load(function() {
+        if({{tutorial_mode}}&&!{{debug_mode}}&&!{{final_mode}})
+          $.prompt(tourStates, { opacity: 0.3, height:"100%", callback: tutorialClosefunc });
+        if({{tutorial_mode}}&&{{debug_mode}}&&!{{final_mode}})
+          $.prompt(tourStatesDebugCodeEditor, { opacity: 0.3, height:"100%", callback: tutorialClosefunc });
+        if({{tutorial_mode}}&&!{{debug_mode}}&&{{final_mode}})
+          $.prompt(tourStatesFinalCodeEditor, { opacity: 0.3, height:"100%", callback: tutorialClosefunc });
+    });
+    </script>
+    <script type="text/javascript">
+    var editorTouched = false;
+    var compileBoxFinished = false;
+
+        function toggle_expert_mode()
+        {
+            function _redraw_editor(name)
+            {
+                var editor = $(name)[0].editor;
+                editor.getSession().setValue(editor.getSession().getValue());
+            }
+
+            $(".panel").slideToggle("slow");
+
+            _redraw_editor("#factory-attributes-editor");
+            _redraw_editor("#factory-init-editor");
+            _redraw_editor("#factory-terminate-editor");
+
+            return true;
+        }
+
+        function file_to_upload_changed(input, buttonName)
+        {
+            var button = $("input#" + buttonName)[0];
+
+            if (input.value == '')
+            {
+                button.className = 'button disabled';
+            }
+            else
+            {
+                button.className = 'button';
+            }
+        }
+
+        function cleanStatus()
+        {
+
+            document.getElementById("heuristic_check_info").innerHTML="Your heuristic is being tested...";
+            document.getElementById("heuristic_check_info").className="";
+            {% for phase in phases %}
+                document.getElementById("phase_{{ phase.1|lower }}_status").innerHTML="&nbsp";
+                document.getElementById("phase_{{ phase.1|lower }}_details").className="details hidden";
+            {% endfor %}
+
+        }
+
+        function getStatus()
+        {
+            var input = $("select#myheuristiclist")[0];
+
+            $.get("/heuristics/status/" + input.options[input.selectedIndex].id + "/",
+                function(data) {
+                    var result = '';
+
+                    // Retrieve the XML document containing the status
+                    var xmlDoc = data;
+
+                    // Process each phase information contained in the status report
+                    var phaseElements = xmlDoc.getElementsByTagName("phase");
+
+                    for (var i = 0; i < phaseElements.length; ++i)
+                    {
+                        // Retrieve the infos about the phase
+                        var phase       = phaseElements[i].getElementsByTagName("name")[0].firstChild.nodeValue;
+                        var status      = phaseElements[i].getElementsByTagName("status")[0].firstChild.nodeValue;
+                        var statustext  = phaseElements[i].getElementsByTagName("statustext")[0].firstChild.nodeValue;
+                        var details     = '';
+
+                        // Retrieve the HTML elements that we must modify
+                        var elStatus    = document.getElementById("phase_"  + phase + "_status");
+                        var elDetails   = document.getElementById("phase_"  + phase + "_details");
+
+                        // Display the status text
+                        elStatus.innerHTML = statustext;
+                        elStatus.className = status;
+
+                        result = status;
+
+                        if (elDetails)
+                        {
+                            if (details == '')
+                            {
+                                var list = phaseElements[i].getElementsByTagName("details");
+                                if (list.length > 0)
+                                {
+                                    var detailsNode = list[0].firstChild;
+                                    details = (detailsNode ? detailsNode.nodeValue : '');
+                                }
+                            }
+
+                            if (details != '')
+                            {
+                                elDetails.innerHTML = "<pre>" + details + "</pre>";
+                                elDetails.className = "details";                    }
+                            else
+                            {
+                                elDetails.className = "details hidden";
+                            }
+                        }
+                    }
+
+                    switch (result)
+                    {
+                        case "done":
+                            document.getElementById("heuristic_check_progress_image").style.display = 'none';
+                            document.getElementById("heuristic_check_info").className = "done";
+                            document.getElementById("heuristic_check_info").innerHTML = 'Your heuristic passed all the tests!';
+                            compileBoxFinished = true;
+                            editorTouched = false;
+                            if(status.experiments < {{nb_task}})
+                                enable_test_button();
+                            retrieve_menu_status();
+                            break;
+
+                        case "error":
+                            document.getElementById("heuristic_check_progress_image").style.display = 'none';
+                            document.getElementById("heuristic_check_info").className = "error";
+                            document.getElementById("heuristic_check_info").innerHTML = "Your heuristic didn't passed the tests! Please fix the problem and upload a new source file.";
+                            compileBoxFinished = true;
+                            editorTouched = false;
+                            retrieve_menu_status();
+                            break;
+
+                        default:
+                            setTimeout("getStatus()", 3000);
+                    }
+
+                }
+            );
+        }
+
+
+        function run_test()
+        {
+            $.post("/factory/test/", {},
+                   function(data) {
+                       window.location = '/factory/tasks/';
+                   }
+               );
+
+            return false;
+        }
+
+        function disable_save_button(status)
+        {
+            document.getElementById("Save_Button").disabled = true;
+
+            if (status.compilation > 0)
+            {
+                editorTouched = false;
+                document.getElementById("Save_Button").title = "Save heuristic after compilation task is over";
+            }
+            else if (status.experiments > 0)
+                document.getElementById("Save_Button").title = "Saving heuristic is possible when no experiments are running";
+            else if (status.recorded_data == "running")
+                document.getElementById("Save_Button").title = "Saving heuristic is possible when debugging process is over";
+            else
+                document.getElementById("Save_Button").title = "Please wait before saving again or refresh the page";
+        }
+
+
+        function enable_save_button()
+        {
+            document.getElementById("Save_Button").disabled = false;
+            document.getElementById("Save_Button").title = "";
+            //track changement in editors
+            _wake_up_edition_boxes_and_test_button_disabling("#factory-dim-editor", false);
+            _wake_up_edition_boxes_and_test_button_disabling("#factory-computefeatures-editor", false);
+            _wake_up_edition_boxes_and_test_button_disabling("#factory-attributes-editor", true);
+            _wake_up_edition_boxes_and_test_button_disabling("#factory-init-editor", true);
+            _wake_up_edition_boxes_and_test_button_disabling("#factory-terminate-editor", true);
+
+        }
+
+        function disable_test_button(status)
+        {
+            //document.getElementById("Test_Button").disabled = true;
+            if (status.compilation > 0)
+            {
+                document.getElementById("Test_Button").disabled = true;
+                //track changement in editors
+                _freeze_edition_boxes_and_test_button_disabling("#factory-dim-editor", false);
+                _freeze_edition_boxes_and_test_button_disabling("#factory-computefeatures-editor", false);
+                _freeze_edition_boxes_and_test_button_disabling("#factory-attributes-editor", true);
+                _freeze_edition_boxes_and_test_button_disabling("#factory-init-editor", true);
+                _freeze_edition_boxes_and_test_button_disabling("#factory-terminate-editor", true);
+
+                document.getElementById("Test_Button").title = "Wait until compilation is done to schedule experiments";
+            }
+            //else if(status.heuristic_unchecked > 0)
+            //{
+            //    document.getElementById("Test_Button").disabled = true;
+            //    document.getElementById("Test_Button").title = "Correct code in one of your heuristic and \"Save\" heuristic again";
+            //}
+            //else if (status.compilation > 0)
+            //{
+            //    document.getElementById("Test_Button").disabled = true;
+            //    document.getElementById("Test_Button").title = "Wait until compilation is done to schedule experiments";
+            //}
+            else if(status.experiments == {{nb_task}})
+            {
+                document.getElementById("Test_Button").disabled = true;
+                document.getElementById("Test_Button").title = "All tasks have a scheduled experiment. This button is enabled when at least one experiment on a task can be scheduled";
+            }
+            else
+            {
+                //document.getElementById("Test_Button").title = "Wait until compilation is done to schedule experiments";
+                if(retrieveSource == false)
+                {
+
+                    document.getElementById("Test_Button").disabled = true;
+                    document.getElementById("Test_Button").title = "Please save heuristic before launching an experiment";
+
+                }
+            }
+
+            if((status.nb_compilation_errors == status.nb_total_numbers_heuristics) && document.getElementById("Test_Button").disabled == true)
+                    document.getElementById("Test_Button").title = "Please make sure at least one of your heuristic can be compiled";
+        }
+
+        function disable_test_button_on_edition()
+        {
+            if(retrieveSource == false)
+            {
+                editorTouched = true;
+                document.getElementById("Test_Button").disabled = true;
+                document.getElementById("Test_Button").title = "Please save heuristic before launching an experiment";
+            }
+            if((status.nb_compilation_errors == status.nb_total_numbers_heuristics) && document.getElementById("Test_Button").disabled == true)
+                    document.getElementById("Test_Button").title = "Please make sure at least one of your heuristic can be compiled";
+
+        }
+
+        function enable_test_button()
+        {
+            if(editorTouched == false)
+            {
+                document.getElementById("Test_Button").disabled = false;
+                document.getElementById("Test_Button").title = "";
+            }
+        }
+
+
+        function _update_editor(name, infos)
+        {
+            var editor = $(name)[0].editor;
+            editor.renderer.$gutterLayer.$first_line_offset = infos.first_line - 1;
+            editor.getSession().setValue(infos.code);
+        }
+        function _update_editor_tutorial(name, infos)
+        {
+            var editor = $(name)[0].editor;
+            editor.getSession().setValue(infos);
+        }
+
+        function _schedule_test_button_disabling(name, expert_mode)
+        {
+            var editor = $(name)[0].editor;
+
+            if (!expert_mode)
+            {
+                editor.getSession().on('change', disable_test_button_on_edition);
+            }
+            else
+            {
+                editor.getSession().on('change', function () {
+                        disable_test_button_on_edition();
+                        $('#checkboxExpertMode')[0].disabled = (editor.getSession().getValue().replace('\n', '').trim().length > 0);
+                    }
+                );
+            }
+        }
+
+        function _freeze_edition_boxes_and_test_button_disabling(name, expert_mode)
+        {
+            var editor = $(name)[0].editor;
+
+            if (!expert_mode)
+            {
+                editor.getSession().on('change', disable_test_button);
+            }
+            else
+            {
+                editor.getSession().on('change', function () {
+                    }
+                );
+            }
+            editor.setReadOnly(true);
+            $('div.'+name+'').css({"background-color":"#eee"})
+        }
+
+        function _wake_up_edition_boxes_and_test_button_disabling(name, expert_mode)
+        {
+            var editor = $(name)[0].editor;
+            editor.setReadOnly(false);
+            $('div.'+name+'').css({"background-color":"#fff"})
+
+            if (!expert_mode)
+            {
+                editor.getSession().on('change', disable_test_button);
+            }
+            else
+            {
+                editor.getSession().on('change', function () {
+                    }
+                );
+            }
+        }
+
+
+        function upload_heuristic(inputName)
+        {
+            //Get all code from editors
+            var editor_dim = $("#factory-dim-editor")[0].editor;
+            var mydimtext = editor_dim.getSession().getValue();
+
+            var editor_computefeatures = $("#factory-computefeatures-editor")[0].editor;
+            var mycomputefeaturestext = editor_computefeatures.getSession().getValue();
+
+            var editor_attributes = $("#factory-attributes-editor")[0].editor;
+            var myattributestext = editor_attributes.getSession().getValue();
+
+            var editor_init = $("#factory-init-editor")[0].editor;
+            var mystartruntext = editor_init.getSession().getValue();
+
+            var editor_terminate = $("#factory-terminate-editor")[0].editor;
+            var myruntext = editor_terminate.getSession().getValue();
+
+            var input = $("select#" + inputName)[0];
+
+            $.alerts.okButton = 'I accept';
+            $.alerts.cancelButton = 'Cancel';
+
+            var userselectedindex = input.selectedIndex
+
+
+            var mystring;
+            var mystring2;
+
+            mystring = "Are you sure you want to save the heuristic: " + input.value + " ?" ;
+            mystring2 = "Please confirm your choice : save the heuristic" ;
+
+            jConfirm(mystring, mystring2, function(r) {
+                if (r)
+                {
+                    $("#heuristic_check_results").show();
+
+                    {% if anonymous %}
+                        // If no cookie is stored, create a cookie
+                        if ($.cookie('robot_uid') == null || $.cookie('robot_uid') == 'REGISTERED_USER')
+                            $.cookie('robot_uid', getUniqueId(), { expires: 14, path: '/' });
+                    {% endif %}
+
+                    $.post("/factory/upload/", {
+                                text_dimeditor: mydimtext,
+                                text_computefeatureseditor: mycomputefeaturestext,
+                                text_attributeseditor: myattributestext,
+                                text_startruneditor: mystartruntext,
+                                text_endruneditor: myruntext,
+                                heuristic_name: input.value,
+                                heuristic_id: input.options[input.selectedIndex].id,
+                            },
+                            function (data) {
+                                var parsed_data = JSON.parse(data);
+
+                                process_menu_status(parsed_data.menu_status);
+
+                                _update_editor("#factory-dim-editor", parsed_data.dim);
+                                _update_editor("#factory-computefeatures-editor", parsed_data.computeFeatures);
+                                _update_editor("#factory-attributes-editor", parsed_data.attributes);
+                                _update_editor("#factory-init-editor", parsed_data.init);
+                                _update_editor("#factory-terminate-editor", parsed_data.terminate);
+
+                                //track changement in editors
+                                _schedule_test_button_disabling("#factory-dim-editor", false);
+                                _schedule_test_button_disabling("#factory-computefeatures-editor", false);
+                                _schedule_test_button_disabling("#factory-attributes-editor", true);
+                                _schedule_test_button_disabling("#factory-init-editor", true);
+                                _schedule_test_button_disabling("#factory-terminate-editor", true);
+
+                                cleanStatus();
+                                input.options[userselectedindex].id = parsed_data.version_id;
+                                getStatus();
+                            }
+                    );
+                }
+                else
+                {
+                    $("#heuristic_check_results").hide();
+                }
+            });
+
+            return false;
+        }
+
+
+        function retrieve_source_code(inputName)
+        {
+            $('#heuristic_check_results').hide();
+            cleanStatus();
+
+            var input = $("select#" + inputName)[0];
+
+            editorTouched = false;
+            retrieveSource = true;
+
+            $.get("/factory/retrieve_source_code/?id=" + input.options[input.options.selectedIndex].id,
+                    function(data) {
+                        if (data !== '')
+                        {
+
+                            var parsed_data = JSON.parse(data);
+
+                            process_menu_status(parsed_data.menu_status);
+                            retrieveSource = true;
+
+                            _update_editor("#factory-dim-editor", parsed_data.dim);
+                            _update_editor("#factory-computefeatures-editor", parsed_data.computeFeatures);
+                            _update_editor("#factory-attributes-editor", parsed_data.attributes);
+                            _update_editor("#factory-init-editor", parsed_data.init);
+                            _update_editor("#factory-terminate-editor", parsed_data.terminate);
+
+                            if ((parsed_data.attributes.code.replace('\n', '').trim().length > 0) ||
+                                (parsed_data.init.code.replace('\n', '').trim().length > 0) ||
+                                (parsed_data.terminate.code.replace('\n', '').trim().length > 0))
+                            {
+                                if (!$('#checkboxExpertMode')[0].checked)
+                                {
+                                    $('#checkboxExpertMode')[0].checked = true;
+                                    toggle_expert_mode();
+                                }
+
+                                $('#checkboxExpertMode')[0].disabled = true;
+                            }
+                            else
+                            {
+                                if ($('#checkboxExpertMode')[0].checked)
+                                {
+                                    $('#checkboxExpertMode')[0].checked = false;
+                                    toggle_expert_mode();
+                                }
+
+                                $('#checkboxExpertMode')[0].disabled = false;
+                            }
+
+                            if (!parsed_data.checked)
+                            {
+                                $('#heuristic_check_results').show();
+                                getStatus();
+                            }
+                            else
+                            {
+                                if(status.experiments < {{nb_task}})
+                                    enable_test_button();
+                            }
+
+                            //track changement in editors
+                            _schedule_test_button_disabling("#factory-dim-editor", false);
+                            _schedule_test_button_disabling("#factory-computefeatures-editor", false);
+                            _schedule_test_button_disabling("#factory-attributes-editor", true);
+                            _schedule_test_button_disabling("#factory-init-editor", true);
+                            _schedule_test_button_disabling("#factory-terminate-editor", true);
+                        }
+            retrieveSource = false;
+                    }
+            );
+        }
+
+        function on_menu_status_changed(status)
+        {
+            if ((status.compilation > 0) || (status.experiments > 0) || (status.recorded_data == "running") || (status.heuristic_unchecked > 0))
+            {
+                //button save is disabled
+                disable_save_button(status);
+                if (status.heuristic_unchecked>0 && !((status.compilation > 0) || (status.experiments > 0) || (status.recorded_data == "running")))
+                      enable_save_button();
+
+                if (status.experiments == {{nb_task}})
+                {
+                    disable_test_button(status);
+                }
+                else if(status.compilation > 0)
+                {
+                    disable_test_button(status);
+                    compileBoxFinished = false;
+                    editorTouched = false;
+                }
+                else
+                {
+                    enable_test_button();
+                }
+
+                if (status.heuristic_unchecked > 0)
+                {
+                    //disable_test_button(status);
+                    if(status.compilation > 0)
+                        disable_save_button(status)
+                    else if(compileBoxFinished == true && status.experiments == 0)
+                        enable_save_button();
+                }
+            }
+            else
+            {
+                if ((status.compilation == 0) || compileBoxFinished == true)
+                {
+                    enable_save_button();
+                    enable_test_button();
+                }
+            }
+
+            if (status.nb_compilation_errors == status.nb_total_numbers_heuristics)
+                disable_test_button(status);
+
+            if (compileBoxFinished == true && status.experiments == 0)
+                enable_save_button();
+
+            var heuristics_list = $('#myheuristiclist')[0];
+            for (var i = 0; i < heuristics_list.children.length; ++i)
+                heuristics_list.children[i].style.color = "#000000";
+
+            for (var i = 0; i < status.heuristic_ids.errors.length; ++i)
+            {
+                var option = $('#' + status.heuristic_ids.errors[i])[0];
+                if (option !== undefined)
+                    option.style.color = "#FF0000";
+            }
+
+            for (var i = 0; i < status.heuristic_ids.in_progress.length; ++i)
+            {
+                var option = $('#' + status.heuristic_ids.in_progress[i])[0];
+                if (option !== undefined)
+                    option.style.color = "#0000FF";
+            }
+        }
+
+
+        function getUniqueId()
+        {
+             var dateObject = new Date();
+             var uniqueId =
+                  dateObject.getFullYear() + '' +
+                  dateObject.getMonth() + '' +
+                  dateObject.getDate() + '' +
+                  dateObject.getTime();
+
+             return uniqueId;
+        };
+
+
+        function clean_editor(name, content)
+        {
+            if (content === undefined)
+                content = '';
+
+            var editor = $(name)[0].editor;
+            editor.renderer.$gutterLayer.$first_line_offset = 0;
+            editor.getSession().setValue(content);
+        }
+
+
+        function add_remove_heuristic(inputName,inputButton)
+        {
+            var input = $("select#" + inputName)[0];
+            //var inputbutton = $("input#" + inputButton)[0];
+
+            $.alerts.okButton = 'I accept';
+            $.alerts.cancelButton = 'Cancel';
+
+            var mystring;
+            var mystring2;
+
+            if (inputButton == "button_remove")
+            {
+                mystring = "Are you sure you want to delete the heuristic: " + input.value + " ?" ;
+                mystring2 = "Please confirm your choice : delete a heuristic" ;
+                jConfirm(mystring, mystring2, function(r) {
+                        if (r)
+                        {
+                            $.get("/factory/delete/?id=" + input.options[input.options.selectedIndex].id,
+                                    function(data) {
+                                        process_menu_status(JSON.parse(data));
+
+                                        input.remove(input.selectedIndex);
+
+                                        if ($('#myheuristiclist')[0].length > 0)
+                                        {
+                                            retrieve_source_code('myheuristiclist');
+                                        }
+                                        else
+                                        {
+                                            clean_editor("#factory-dim-editor", "// Max: 10\nreturn 1;");
+                                            clean_editor("#factory-computefeatures-editor", "features[0] = 1.0f;");
+                                            clean_editor("#factory-attributes-editor");
+                                            clean_editor("#factory-init-editor");
+                                            clean_editor("#factory-terminate-editor");
+                                        }
+                                    }
+
+                            ).error(function()
+                            {
+                                input.remove(input.selectedIndex);
+                                if ($('#myheuristiclist')[0].length > 0)
+                                        {
+                                            retrieve_source_code('myheuristiclist');
+                                        }
+                                        else
+                                        {
+                                            clean_editor("#factory-dim-editor", "// Max: 10\nreturn 1;");
+                                            clean_editor("#factory-computefeatures-editor", "features[0] = 1.0f;");
+                                            clean_editor("#factory-attributes-editor");
+                                            clean_editor("#factory-init-editor");
+                                            clean_editor("#factory-terminate-editor");
+                                        }
+
+                            }
+                            );
+
+                        }
+                });
+
+            }
+            else if (inputButton == "button_add")
+            {
+                mystring = "Please enter the name of your new heuristic : " ;
+                mystring2 = "Please confirm your choice : adding a new heuristic" ;
+                jPrompt(mystring, "",mystring2 ,function(r) {
+
+                        if (r!="" && r!=null)
+                        {
+                            heuristicName = r.toLowerCase().replace(' ', '').replace('-', '_');
+
+                            for(var i=0; i<input.options.length; i++)
+                            {
+                                if (heuristicName == input.options[i].text)
+                                {
+                                    callbackCheckName(true,heuristicName);
+                                    return;
+                                }
+                            }
+
+                            {% if anonymous %}
+                                //if no cookie is stored so create a cookie
+                                if ($.cookie('robot_uid') == null || $.cookie('robot_uid') == 'REGISTERED_USER')
+                                    $.cookie('robot_uid', getUniqueId(), { expires: 14, path: '/'});
+                            {% endif %}
+
+                            $.get("/heuristics/test_heuristic_name/?filename="+heuristicName+".cpp",
+                                function(data) {
+                                    callbackCheckName(data!='OK', heuristicName);
+                                });
+                        }
+                });
+            }
+
+            return false;
+        }
+
+        function add_remove_heuristic_tutorial(inputName,inputButton)
+        {
+            var input = $("select#" + inputName)[0];
+            //var inputbutton = $("input#" + inputButton)[0];
+
+            $.alerts.okButton = 'I accept';
+            $.alerts.cancelButton = 'Cancel';
+
+            var mystring;
+            var mystring2;
+
+            if (inputButton == "button_remove")
+            {
+                mystring = "Are you sure you want to delete the heuristic: " + input.value + " ?" ;
+                mystring2 = "Please confirm your choice : delete a heuristic" ;
+                jConfirm(mystring, mystring2, function(r) {
+                        if (r)
+                        {
+                            $.get("/factory/delete/?id=" + input.options[input.options.selectedIndex].id,
+                                    function(data) {
+                                        process_menu_status(JSON.parse(data));
+
+                                        input.remove(input.selectedIndex);
+
+                                        if ($('#myheuristiclist')[0].length > 0)
+                                        {
+                                            retrieve_source_code('myheuristiclist');
+                                        }
+                                        else
+                                        {
+                                            clean_editor("#factory-dim-editor", "// Max: 10\nreturn 1;");
+                                            clean_editor("#factory-computefeatures-editor", "features[0] = 1.0f;");
+                                            clean_editor("#factory-attributes-editor");
+                                            clean_editor("#factory-init-editor");
+                                            clean_editor("#factory-terminate-editor");
+                                        }
+                                    }
+
+                            ).error(function()
+                            {
+                                input.remove(input.selectedIndex);
+                                if ($('#myheuristiclist')[0].length > 0)
+                                        {
+                                            retrieve_source_code('myheuristiclist');
+                                        }
+                                        else
+                                        {
+                                            clean_editor("#factory-dim-editor", "// Max: 10\nreturn 1;");
+                                            clean_editor("#factory-computefeatures-editor", "features[0] = 1.0f;");
+                                            clean_editor("#factory-attributes-editor");
+                                            clean_editor("#factory-init-editor");
+                                            clean_editor("#factory-terminate-editor");
+                                        }
+
+                            }
+                            );
+
+                        }
+                });
+
+            }
+            else if (inputButton == "button_add")
+            {
+                mystring = "Please enter the name of your new heuristic : " ;
+                mystring2 = "Please confirm your choice : adding a new heuristic" ;
+                jPrompt(mystring, "tutorial_center_red",mystring2 ,function(r) {
+
+                        if (r!="" && r!=null)
+                        {
+                            heuristicName = r.toLowerCase().replace(' ', '').replace('-', '_');
+
+                            for(var i=0; i<input.options.length; i++)
+                            {
+                                if (heuristicName == input.options[i].text)
+                                {
+                                    callbackCheckName(true,heuristicName);
+                                    return;
+                                }
+                            }
+
+                            {% if anonymous %}
+                                //if no cookie is stored so create a cookie
+                                if ($.cookie('robot_uid') == null || $.cookie('robot_uid') == 'REGISTERED_USER')
+                                    $.cookie('robot_uid', getUniqueId(), { expires: 14, path: '/'});
+                            {% endif %}
+
+                            $.get("/heuristics/test_heuristic_name/?filename="+heuristicName+".cpp",
+                                function(data) {
+                                    callbackCheckName(data!='OK', heuristicName);
+                                });
+                        }
+                });
+
+            }
+
+            return false;
+        }
+
+
+        function callbackCheckName(exist, heuristicName)
+        {
+            if (exist)
+            {
+                $.alerts.okButton = 'Ok';
+                $.alerts.cancelButton = null;
+                mystring = "Heuristic name already used" ;
+                mystring2 = "Information" ;
+
+                jAlert(mystring, mystring2 ,function(r) {});
+            }
+            else
+            {
+
+                var input = $("select#myheuristiclist")[0];
+                var option=document.createElement("option");
+                option.text=heuristicName;
+                option.id="-1";
+                option.value=option.text;
+
+                try
+                {
+                    input.add(option,null); // standards compliant
+                    input.options.selectedIndex = option.index;
+                }
+                catch(ex)
+                {
+                    input.add(option); // IE only
+                    input.options.selectedIndex = option.index;
+                }
+
+                document.getElementById("Test_Button").disabled = true;
+
+                clean_editor("#factory-dim-editor", "// Max: 10\nreturn 1;");
+                clean_editor("#factory-computefeatures-editor", "features[0] = 1.0f;");
+                clean_editor("#factory-attributes-editor");
+                clean_editor("#factory-init-editor");
+                clean_editor("#factory-terminate-editor");
+            }
+        }
+
+    </script>
+
+{% endblock scripts %}
+
+
+{% block content %}
+
+    {% assign factory_title "Code editor" %}
+    {{ block.super }}
+
+    <div id="factory_select_box">
+        <table width="100%">
+            <tr>
+                <td>
+                    Current Heuristic:
+                    <select id="myheuristiclist" name="mydropdown" onchange="return retrieve_source_code('myheuristiclist');">
+                    {% if not heuristiclist_status %}
+                        <option id="-1" value="dummy">dummy</option>
+                    {% else %}
+                        {% for version in heuristiclist %}
+                            <option id="{{version.id}}"value="{{version.heuristic.name}}">{{version.heuristic.name}}</option>
+                        {% endfor %}
+                    {% endif %}
+                    </select>
+
+                    <a class="add" id="btn_submit_upload" title="Create new heuristic" name="btn_submit" onclick="return add_remove_heuristic('myheuristiclist','button_add');"><img name="btn_submit" src="/images/heuristic_add.png"></a>
+                    <a class="delete" id="btn_submit_upload" title="Delete this heuristic" name="btn_remove" onclick="return add_remove_heuristic('myheuristiclist','button_remove');"><img class="displayed" name="btn_remove" src="/images/heuristic_delete.png"></a>
+
+                    <input id="checkboxExpertMode" type="checkbox" onclick="return toggle_expert_mode();" name="expertMode" value="light" /> <i>Expert Mode</i>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="panel">
+        <table class="factory-table-data">
+            <tbody>
+                <tr>
+                    <td class="code-prototype">
+                        Attributes
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="factory-attributes-editor" class="large"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panellight">
+        <table class="factory-table-data">
+            <tbody>
+                <tr>
+                    <td class="code-prototype">
+                        unsigned int dim() {
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="factory-dim-editor" class="large">// Max: 10
+return 1;
+</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="code-prototype">
+                        }
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <table class="factory-table-data">
+            <tbody>
+                <tr>
+                    <td class="code-prototype">
+                        void init() {
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="factory-init-editor" class="large"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="code-prototype">
+                        }
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panellight">
+        <table class="factory-table-data">
+            <tbody>
+                <tr>
+                    <td class="code-prototype">
+                        void computeFeatures(unsigned int nb_images, Image** images, scalar_t* features) {
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="factory-computefeatures-editor" class="large">features[0] = 1.0f;</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="code-prototype">
+                        }
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <table class="factory-table-data">
+            <tbody>
+                <tr>
+                    <td class="code-prototype">
+                        void terminate() {
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="factory-terminate-editor" class="large"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="code-prototype">
+                        }
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <table class="factory-table-data">
+        <tbody>
+            <tr align="right">
+                <td>
+                    <input id="Save_Button" title="" type="submit" onclick="return upload_heuristic('myheuristiclist');" name="btn_submit" id="btn_simple_heuristics_submit_upload" value="Save">
+                    <input id="Test_Button" title="" onclick="return run_test();" type="submit" value="Test">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <div id="heuristic_check_results">
+        <p id="heuristic_check_info">Your heuristic is being tested...</p>
+        <div class="results">
+            <p class="title">Results:</p>
+
+            <img id="heuristic_check_progress_image" src="/images/progress.gif" />
+
+            {% for phase in phases %}
+                <dl>
+                    <dt>{{ phase.1 }}:</dt>
+                    <dd id="phase_{{ phase.1|lower }}_status">&nbsp;</dd>
+                    <dd id="phase_{{ phase.1|lower }}_details" class="details hidden"></dd>
+                </dl>
+            {% endfor %}
+
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function() {
+
+            document.getElementById('checkboxExpertMode').checked = false;
+
+            retrieve_source_code('myheuristiclist');
+
+            $(".panel").show();
+            $("#heuristic_check_results").show();
+
+            $(".panellight").show();
+
+            var dimeditor = ace.edit("factory-dim-editor");
+            dimeditor.setTheme("ace/theme/textmate");
+
+            var CCPPMode = require("ace/mode/c_cpp").Mode;
+            dimeditor.getSession().setMode(new CCPPMode());
+            dimeditor.setShowPrintMargin(false);
+            dimeditor.setHighlightActiveLine(false);
+
+            var targetfactorydiv = $("#factory-dim-editor")[0];
+            targetfactorydiv.editor = dimeditor;
+
+            var computefeatureseditor = ace.edit("factory-computefeatures-editor");
+            computefeatureseditor.setTheme("ace/theme/textmate");
+            var CCPPMode = require("ace/mode/c_cpp").Mode;
+            computefeatureseditor.getSession().setMode(new CCPPMode());
+            computefeatureseditor.setShowPrintMargin(false);
+            computefeatureseditor.setHighlightActiveLine(false);
+            var targetcomputefeaturesdiv = $("#factory-computefeatures-editor")[0];
+            targetcomputefeaturesdiv.editor = computefeatureseditor;
+
+            var attributeseditor = ace.edit("factory-attributes-editor");
+            attributeseditor.setTheme("ace/theme/textmate");
+            var CCPPMode = require("ace/mode/c_cpp").Mode;
+            attributeseditor.getSession().setMode(new CCPPMode());
+            attributeseditor.setShowPrintMargin(false);
+            attributeseditor.setHighlightActiveLine(false);
+            var targetattributesdiv = $("#factory-attributes-editor")[0];
+            targetattributesdiv.editor = attributeseditor;
+
+            var startruneditor = ace.edit("factory-init-editor");
+            startruneditor.setTheme("ace/theme/textmate");
+            var CCPPMode = require("ace/mode/c_cpp").Mode;
+            startruneditor.getSession().setMode(new CCPPMode());
+            startruneditor.setShowPrintMargin(false);
+            startruneditor.setHighlightActiveLine(false);
+            var targetstartrundiv = $("#factory-init-editor")[0];
+            targetstartrundiv.editor = startruneditor;
+
+            var runeditor = ace.edit("factory-terminate-editor");
+            runeditor.setTheme("ace/theme/textmate");
+            var CCPPMode = require("ace/mode/c_cpp").Mode;
+            runeditor.getSession().setMode(new CCPPMode());
+            runeditor.setShowPrintMargin(false);
+            runeditor.setHighlightActiveLine(false);
+            var targetrundiv = $("#factory-terminate-editor")[0];
+            targetrundiv.editor = runeditor;
+
+            $(".panel").hide();
+            $("#heuristic_check_results").hide();
+
+            menu_status_callback = on_menu_status_changed;
+        });
+    </script>
+
+{% endblock content %}
+

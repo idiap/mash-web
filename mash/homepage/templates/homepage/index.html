@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="/css/homepage.css" />
+    <link rel="stylesheet" href="/css/news.css" />
+{% endblock stylesheets %}
+
+
+{% block content %}
+    <div id="homepage-sideboxes">
+        <div id="homepage-rss" class="homepage-sidebox">
+            <ul>
+                <li><a href="#">There</a></li>
+                <li><a href="#">should be</a></li>
+                <li><a href="#">a list</a></li>
+                <li><a href="#">of RSS streams</a></li>
+                <li><a href="#">here!</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="homepage-content">
+        <div id="homepage-introduction" class="homepage-content-box">
+            <div class="homepage-box">{{ text|safe }}</div>
+            <p class="rightalign"><a class="readmore" href="/wiki/index.php/About_the_MASH_project">Read more >></a></p>
+        </div>
+
+        {% if latest_news_list %}
+            <div id="homepage-news" class="homepage-content-box">
+                <span class="homepage-title">Latest news</span>
+                <div class="homepage-box">
+                    {{ latest_news_list|safe }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock content %}

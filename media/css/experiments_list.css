@@ -1,0 +1,371 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the servers status page
+*
+*******************************************************************************/
+
+li#experiments_banner
+{
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1.2em;
+}
+
+
+div.experiments_topbar *
+{
+    padding: 0;
+    margin: 0;
+}
+
+
+div.experiments_topbar
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 12px;
+    background-color: #C5ECAD;
+    padding: 10px 15px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div.experiments_topbar ul
+{
+    height: 2em;
+    list-style-type: none;
+}
+
+
+div.experiments_topbar ul.row1
+{
+    border-bottom: 1px solid rgb(255, 255, 255);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+
+div.experiments_topbar li
+{
+    display: block;
+    float: left;
+    margin-right: 5px;
+    line-height: 2em;
+}
+
+
+div.experiments_topbar li.bold
+{
+    font-weight: bold;
+}
+
+
+div.experiments_topbar li.margin-left
+{
+    margin-left: 30px;
+}
+
+
+div.experiments_topbar li.margin-left2
+{
+    margin-left: 10px;
+}
+
+
+div.experiments_topbar li.right
+{
+    float: right;
+}
+
+
+div.experiments_topbar li.rightmost
+{
+    margin-right: 0;
+}
+
+
+div.experiments_topbar li a
+{
+    text-decoration: none;
+    color: #000000;
+}
+
+
+div.experiments_topbar li a:hover
+{
+    text-decoration: underline;
+    color: #008000;
+}
+
+
+div.experiments_topbar li a.schedule
+{
+    background-image: url(/images/heuristic_add.png);
+    background-repeat: no-repeat;
+    margin-left: 20px;
+    padding-left: 21px;
+    font-size: 13px;
+}
+
+
+div.experiments_topbar form#search
+{
+    margin-left: 15px;
+    font-family: Verdana,Helvetica,Arial,sans-serif;
+    font-size: 1em;
+    font-weight: normal;
+}
+
+
+div.experiments_topbar form#search fieldset
+{
+    border: 0;
+}
+
+
+div.experiments_topbar form#search input.searchbox
+{
+    border: 1px solid #000000;
+    background-color: #FFFFFF;
+    width: 16em;
+    background-image: url(/images/icon_textbox_search.gif);
+    background-position: left 1px;
+    background-repeat: no-repeat;
+    padding-left: 17px;
+    padding-right: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+
+div.experiments_topbar form#search input.blurred
+{
+    color: #888888;
+}
+
+
+div.experiments_topbar form#search input.button
+{
+    padding: 1px 3px;
+}
+
+
+div.experiments_topbar span#pages_nav strong
+{
+    border: 1px solid #007000;
+    background-color: #007000;
+    color: #FFFFFF;
+    font-size: 0.95em;
+    font-weight: normal;
+    line-height: 1.5em;
+    margin: 0 2px;
+    padding: 0 2px;
+}
+
+
+div.experiments_topbar span#pages_nav
+{
+    font-family: Verdana,Helvetica,Arial,sans-serif;
+}
+
+
+div.experiments_topbar span#pages_nav a
+{
+    border: 1px solid #007000;
+    text-decoration: none;
+    font-size: 0.95em;
+    line-height: 1.5em;
+    margin: 0 2px;
+    padding: 0 2px;
+}
+
+
+div.experiments_topbar span#pages_nav a:hover
+{
+    border: 1px solid #BC2A4D;
+    background-color: #BC2A4D;
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+
+div.experiments-list
+{
+    margin-bottom: 30px;
+}
+
+
+div.experiments-list h1
+{
+    color: #993300;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+
+p.not-found
+{
+    color: #555555;
+}
+
+
+a.add
+{
+    float: right;
+}
+
+
+div.experiments-list table
+{
+    width: 100%;
+    background-color: #2CB618;
+    color: #007000;
+    font-family: Arial;
+    font-size: 12px;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+
+
+div.experiments-list table thead
+{
+    line-height: 2em;
+    color: #FFFFFF;
+    text-align: center;
+    font-weight: bold;
+}
+
+
+div.experiments-list table th
+{
+    color: #FFFFFF;
+}
+
+
+div.experiments-list table th a
+{
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+
+div.experiments-list table th a:hover
+{
+    text-decoration: underline;
+}
+
+
+div.experiments-list table tr.row1
+{
+    background-color: #C5ECAD;
+}
+
+
+div.experiments-list table tr.row2
+{
+    background-color: #B6DE9F;
+}
+
+
+div.experiments-list table td
+{
+    padding: 5px;
+    border-top: 1px solid #FFFFFF;
+}
+
+
+div.experiments-list table td a
+{
+    color: #007000;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+div.experiments-list table td a:hover
+{
+    text-decoration: underline;
+    color: #BC2A4D;
+}
+
+
+div.experiments-list table td.username
+{
+    width: 10%;
+    text-align: center;
+}
+
+
+div.experiments-list table td.name
+{
+    text-align: center;
+}
+
+
+div.experiments-list table td.task
+{
+    text-align: center;
+    width: 8%;
+}
+
+
+div.experiments-list table td.details
+{
+    text-align: center;
+    width: 12%;
+}
+
+
+div.experiments-list table td.predictor
+{
+    text-align: center;
+    width: 8%;
+}
+
+
+div.experiments-list table td.heuristics
+{
+    text-align: center;
+    width: 7em;
+}
+
+
+div.experiments-list table td.results
+{
+    text-align: center;
+    width: 8%;
+}
+
+
+div.experiments-list table td.date
+{
+    text-align: center;
+    width: 12em;
+}
+
+
+div.experiments-list table td.scheduled,
+div.experiments-list table td.running
+{
+    font-weight: bold;
+    color: #0000FF;
+}
+
+
+div.experiments-list table td.failed
+{
+    font-weight: bold;
+    color: #FF0000;
+}

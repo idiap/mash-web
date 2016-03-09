@@ -1,0 +1,40 @@
+{% load assign %}
+
+
+<div id="{{ list_id }}" class="details_box">
+    <a href="#" class="details_header green"><div class="details_title"><table><tbody><tr><td class="details_icon">-</td><td>{{ title|safe }} ({{ contests.count }})</td></tr></tbody></table></div></a>
+    <div class="content green">
+        <div class="contests_list">
+            <table>
+                <thead>
+                    {{ table_header|safe }}
+                </thead>
+                <tbody>
+                    {% for contest in contests  %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td class="name"><a href="/contests/{{ contest.id }}/">{{ contest.name }}</a></td>
+                            <td class="summary">{{ contest.summary }}</td>
+                            {% if not contest.isInFuture %}
+                                {% assign best_entry contest.bestEntry %}
+
+                                <td class="entries">{{ contest.entries_count }}</td>
+                                <td class="best_entry">{% if best_entry %}<a href="/heuristics/v{{ best_entry.heuristic_version.id }}">{{ contest.best_entry_name }}</a>{% else %}-{% endif %}</td>
+                                {% ifequal contest.configuration.task.type 'gp' %}
+                                    <td class="results" title="Successful / Unsuccessful / Failed">{{ best_entry.experiment.gpResultsSummary }}</td>
+                                {% else %}
+                                    {% if best_entry.experiment.classification_results %}
+                                        <td class="results" title="Training error / Test error">{{ best_entry.experiment.classification_results.displayableTrainError }} / {{ best_entry.experiment.classification_results.displayableTestError }}</td>
+                                    {% else %}
+                                        <td class="results" title="Training error / Test error">- / -</td>
+                                    {% endif %}
+                                {% endifequal %}
+                            {% endif %}
+                            <td class="date">{{ contest.start|date:"N j, Y, P" }}</td>
+                            <td class="date">{% if contest.end %}{{ contest.end|date:"N j, Y, P" }}{% else %}-{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

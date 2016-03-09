@@ -1,0 +1,337 @@
+<script type="text/javascript">
+    {% if tutorial_mode %}
+    var p_get_task_details = 0;
+    {% endif %}
+
+    function back_to_tasks()
+    {
+        kill_timeouts();
+
+        for (var i = 0; i < {{ factoryTasks|length }}; ++i)
+            task_results_state.push(null);
+        getTestResults();
+
+        $('#slider_table').animate({ marginLeft: "+=864px", }, 1000,
+                                   function() { $('#slider_table #details .container').hide(); });
+    }
+
+
+    function run_test_for_current_task()
+    {
+        kill_timeouts();
+
+        $('#slider_table #details #task_obsolete').hide();
+        $('#slider_table #details #task_score').hide();
+        $('#slider_table #details #task_status').hide();
+        $('#slider_table #details #task_test_button').hide();
+        $('#slider_table #details #task_progress').show();
+
+        $('#slider_table #details div.instrument_view').hide();
+        $("#slider_table #details #sequences").hide();
+
+        $('td#details div.instrument_view .instrument_container').text('')
+
+        var canvas = $("#slider_table #details #sequences #results_canvas");
+        if (canvas.length == 1)
+            $("#slider_table #details #sequences")[0].removeChild(canvas[0]);
+
+        $.post("/factory/test/" + current_task + "/", {},
+                function(data) {
+                    process_menu_status(JSON.parse(data));
+                    getTaskDetails(current_task, false);
+                }
+        ).error(function() {
+                $("#slider_table #tasks #task_status").text('ERROR');
+                $("#slider_table #tasks #task_status").addClass('failed');
+                $("#slider_table #tasks #task_status").show();
+                $("#slider_table #tasks #task_progress").hide();
+            }
+        );
+
+        return false;
+    }
+
+
+    function getTaskDetails(number, clear)
+    {
+        kill_timeouts();
+
+        current_task = number;
+
+        if (clear)
+        {
+            $('#slider_table #details #task_title').text('Task ' + number);
+            $('#slider_table #details #task_obsolete').hide();
+            $('#slider_table #details #task_description').text('');
+            $('#slider_table #details #task_score').hide();
+            $('#slider_table #details #task_status').hide();
+            $('#slider_table #details #task_test_button').hide();
+            $('#slider_table #details #task_progress').show();
+            $('#slider_table #details #task_image')[0].src = '';
+
+            $('#slider_table #details div.instrument_view').hide();
+            $("#slider_table #details #sequences").hide();
+
+            var canvas = $("#slider_table #details #sequences #results_canvas");
+            if (canvas.length == 1)
+                $("#slider_table #details #sequences")[0].removeChild(canvas[0]);
+        }
+
+        {% if not tutorial_mode %}
+        var url = "/factory/task_details/"
+        {% else %}
+        var url = "/factory/task_details_tutorial/"
+        {% endif %}
+
+        $.post(url + number + "/", { {% if tutorial_mode %}tutorial_step:p_get_task_details,{% endif %}},
+                function(data) {
+                    var done = false;
+
+                    var parsed_data = JSON.parse(data);
+
+                    process_menu_status(parsed_data.menu_status);
+
+                    $('#slider_table #details #task_description').text(parsed_data.description);
+                    $('#slider_table #details #task_image')[0].src = parsed_data.image;
+
+                    if (parsed_data.status == '-')
+                    {
+                        done = true;
+
+                        $('#slider_table #details #task_progress').hide();
+                        if (parsed_data.can_run_test)
+                            $('#slider_table #details #task_test_button').show();
+                    }
+                    else
+                    {
+                        var elStatus = $('#slider_table #details #task_status');
+
+                        if (parsed_data.status == 'running')
+                        {
+                            elStatus.text('In progress...');
+                            elStatus.removeClass('success');
+                            elStatus.removeClass('failed');
+                            elStatus.addClass('inprogress');
+                        }
+                        else if (parsed_data.status == 'scheduled')
+                        {
+                            elStatus.text('Scheduled...');
+                            elStatus.removeClass('success');
+                            elStatus.removeClass('failed');
+                            elStatus.addClass('inprogress');
+                        }
+                        else if (parsed_data.status == 'failed')
+                        {
+                            elStatus.text('ERROR');
+                            elStatus.removeClass('success');
+                            elStatus.removeClass('inprogress');
+                            elStatus.addClass('failed');
+
+                            $('#slider_table #details #task_progress').hide();
+                            $('#slider_table #details #task_test_button').show();
+
+                            done = true;
+                        }
+                        else
+                        {
+                            var nbActionsDone = parsed_data.result.nbActionsDone;
+                            var nbMimickingErrors = parsed_data.result.nbMimickingErrors;
+
+                            var score = (nbActionsDone - nbMimickingErrors) / nbActionsDone;
+
+                            var elScore = $('#slider_table #details #task_score');
+                            elScore.text('' + (Math.floor(score * 10000) / 100).toFixed(2) + '%');
+
+                            $('#slider_table #details #task_progress').hide();
+
+                            elStatus.removeClass('inprogress');
+
+                            if (score >= 0.75)
+                            {
+                                elStatus.text('Success');
+                                elStatus.removeClass('failed');
+                                elStatus.addClass('success');
+
+                                elScore.removeClass('failed');
+                                elScore.addClass('success');
+                            }
+                            else
+                            {
+                                elStatus.text('Task failed');
+                                elStatus.removeClass('success');
+                                elStatus.addClass('failed');
+
+                                elScore.removeClass('success');
+                                elScore.addClass('failed');
+                            }
+
+                            if (parsed_data.obsolete)
+                                $('#slider_table #details #task_obsolete').show();
+
+                            elScore.show();
+
+                            $('#slider_table #details #progress_sequences').show();
+                            $("#slider_table #details #sequences").show();
+
+                            for (var index = 0; index < parsed_data.instrument_views.length; ++index)
+                            {
+                                $('#slider_table #details div#instrument_view_' + parsed_data.instrument_views[index]).show();
+                                $('#slider_table #details div#instrument_view_' + parsed_data.instrument_views[index] + ' .progress').show();
+
+                                getSnippet(number, parsed_data.instrument_views[index]);
+                            }
+
+                            getRoundsResults(number);
+
+                            done = true;
+                        }
+
+                        elStatus.show();
+                    }
+
+                    if (!done)
+                        add_timeout("getTaskDetails(" + number + ", false)", 3000);
+                 }
+             );
+    }
+
+
+    function getSnippet(task_number, instrument_view)
+    {
+        {% if not tutorial_mode %}
+        var url = "/factory/snippet/"
+        {% else %}
+        var url = "/factory/snippet_tutorial/"
+        {% endif %}
+
+        $.post(url + task_number + "/" + instrument_view + "/", { {% if tutorial_mode %}tutorial_step:p_get_task_details,{% endif %}},
+                function (data) {
+                    if (data == "ERROR")
+                    {
+                        $('td#details div#instrument_view_' + instrument_view + ' .progress').hide();
+
+                        var elContainer = $('td#details div#instrument_view_' + instrument_view + ' .instrument_container')[0];
+                        elContainer.innerHTML = '<p class="error">An error occurred during the generation of the snippet</p>';
+                    }
+                    else if (data == "UNAVAILABLE")
+                    {
+                        add_timeout("getSnippet(" + task_number + ", " + instrument_view + ")", 5000);
+                    }
+                    else
+                    {
+                        $('td#details div#instrument_view_' + instrument_view + ' .progress').hide();
+
+                        var elContainer = $('td#details div#instrument_view_' + instrument_view + ' .instrument_container')[0];
+                        elContainer.innerHTML = data;
+
+                        var elScripts = elContainer.getElementsByTagName('script');
+                        if (elScripts.length == 1)
+                        {
+                            var offset_function = elScripts[0].innerHTML.indexOf(snippet_start_functions[instrument_view]);
+                            var offset_start = elScripts[0].innerHTML.indexOf('{', offset_function);
+                            var offset_end = elScripts[0].innerHTML.lastIndexOf('}');
+
+                            var command = 'if (typeof(' + snippet_start_functions[instrument_view] + ') != "undefined") ' + snippet_start_functions[instrument_view] + '(); else ' + elScripts[0].innerHTML.substring(offset_start, offset_end+1);
+
+                            eval(command);
+                        }
+                    }
+                }
+            );
+    }
+
+
+    function getRoundsResults(task_number)
+    {
+        var container = $("#slider_table #details #sequences");
+        {% if not tutorial_mode %}
+        var url = "/factory/rounds_results/"
+        {% else %}
+        var url = "/factory/rounds_results_tutorial/"
+        {% endif %}
+
+        $.post(url + task_number + "/", {},
+                function(data) {
+                    var parsed_data = JSON.parse(data);
+                    var nb_rounds   = parsed_data.rounds.length;
+                    var output      = '';
+                    var scores      = new Array();
+                    var labels      = new Array();
+                    var colors      = new Array();
+                    var tooltips    = new Array();
+
+                    process_menu_status(parsed_data.menu_status);
+
+                    for (var i = 0; i < nb_rounds; ++i)
+                    {
+                        var round = parsed_data.rounds[i];
+
+                        scores.push(round.score);
+                        labels.push(round.index);
+                        tooltips.push(round.nbCorrectActions + '/' + round.nbActionsDone);
+
+                        if (round.score >= 80)
+                            colors.push('#00A000');
+                        else
+                            colors.push('#FF0000');
+                    }
+
+                    var canvas = $("#slider_table #details #sequences #results_canvas");
+                    if (canvas.length == 1)
+                        container[0].removeChild(canvas[0]);
+
+                    canvas = document.createElement('canvas');
+                    canvas.setAttribute('id', 'results_canvas');
+                    canvas.setAttribute('width', 600);
+                    canvas.setAttribute('height', nb_rounds * 25);
+
+                    container[0].appendChild(canvas);
+
+                    var hbar = new RGraph.HBar('results_canvas', scores);
+                    hbar.Set('chart.labels', labels);
+                    hbar.Set('chart.labels.above', true);
+                    hbar.Set('chart.labels.above.decimals', 2);
+                    hbar.Set('chart.text.font', 'Arial');
+                    hbar.Set('chart.text.size', 10);
+                    hbar.Set('chart.units.ingraph', true);
+                    hbar.Set('chart.xlabels', false);
+                    hbar.Set('chart.vmargin', 6);
+                    hbar.Set('chart.xmax', 100);
+                    hbar.Set('chart.xmin', -10);
+                    hbar.Set('chart.units.post', '%');
+                    hbar.Set('chart.background.grid', true);
+                    hbar.Set('chart.colors', colors);
+                    hbar.Set('chart.shadow', true);
+                    hbar.Set('chart.background.grid.autofit', true);
+                    hbar.Set('chart.background.grid.autofit.numvlines', 10);
+                    hbar.Set('chart.background.grid.autofit.numhlines', 0);
+                    hbar.Set('chart.tooltips', tooltips);
+                    hbar.Set('chart.tooltips.event', 'onmousemove');
+                    hbar.Set('chart.events.click', function(e, bar) {
+                            RGraph.HideTooltip();
+                            max_frame = undefined;
+                            getSequenceDetails(task_number, labels[bar[5]]);
+                            $('#slider_table #sequence .container').show();
+                            $('#slider_table').animate({ marginLeft: "-=864px", }, 1000,
+                                                       function() { $('#slider_table #details .container').hide(); });
+                        });
+
+                    hbar.context.font = "10pt Arial";
+
+                    var textWidth = hbar.context.measureText("000");
+
+                    hbar.Set('chart.gutter.left', textWidth.width + 10);
+                    hbar.Set('chart.gutter.right', 65);
+                    hbar.Set('chart.gutter.top', 5);
+                    hbar.Set('chart.gutter.bottom', 20);
+
+                    hbar.Draw();
+
+                    $('#slider_table #details #progress_sequences').hide();
+
+                    $('#slider_table #details #task_test_button').show();
+                }
+            );
+    }
+
+</script>

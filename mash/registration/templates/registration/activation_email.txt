@@ -1,0 +1,18 @@
+(This is an automatic e-mail, do not reply to it)
+
+
+Dear {{ username }},
+
+Thank you for registering at the MASH project. Before we can activate your account one last step must be taken to complete your registration.
+
+Please note - you must complete this last step in the following {{ expiration_days }} days to become a registered member. You will only need to visit this URL once to activate your account.
+
+To complete your registration, please visit this URL:
+http://{{ site.domain }}/accounts/activate/{{ activation_key }}
+
+
+If you are having problems to activate your account, please contact a member of our support staff at info@{{ site.domain }}
+
+
+All the best,
+MASH Project

@@ -1,0 +1,24 @@
+{% extends "tools/base_tools.html" %}
+
+{% block title %}{{ block.super }} - Error report #{{ report.id }}{% endblock %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="/css/tools_error_report.css" />
+{% endblock stylesheets %}
+
+
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    {% include "tools/scripts_error_report.html" %}
+
+    <script type="text/javascript">
+        jQuery(document).ready(setupStackTraces);
+    </script>
+{% endblock scripts %}
+
+
+{% block content %}
+    {% include "tools/embedded_error_report.html" %}
+{% endblock content %}

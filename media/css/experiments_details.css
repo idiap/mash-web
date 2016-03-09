@@ -1,0 +1,201 @@
+/*******************************************************************************
+*
+*    Contains the CSS used to display the 'experiments details' page
+*
+*******************************************************************************/
+
+div#mash-content.container
+{
+    margin-left: 136px;
+    max-width: 864px;
+    padding-top: 0;
+    font-size: 14px;
+}
+
+
+div.infos_box
+{
+    color: #000000;
+    font-family: Arial;
+    font-size: 13px;
+    background-color: #CEF6B5;
+    padding: 4px 10px 10px 10px;
+    margin-bottom: 30px;
+    border-radius: 12px;
+    -moz-border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+
+div.infos_box *
+{
+    padding: 0;
+    margin: 0;
+}
+
+
+div.infos_box div.tools p.name
+{
+    font-size: 18px;
+    font-weight: bold;
+    color: #007000;
+    margin-top: 5px;
+    text-align: center;
+}
+
+
+div.infos_box div.section
+{
+    margin-top: 20px;
+}
+
+
+div.infos_box div.section p.title
+{
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+
+div.infos_box div.section p.content
+{
+    margin-left: 10px;
+}
+
+
+div.infos_box div.section dt
+{
+    width: 10em;
+    text-align: right;
+    float: left;
+}
+
+
+div.infos_box div.section dd
+{
+    margin-left: 10.5em;
+    padding-left: 5px;
+    margin-bottom: 2px;
+}
+
+
+div.infos_box div.section dd span
+{
+    font-weight: bold;
+}
+
+
+div.infos_box div.section dd span.scheduled,
+div.infos_box div.section dd span.running
+{
+    color: #0000FF;
+}
+
+
+div.infos_box div.section dd span.failed
+{
+    color: #FF0000;
+}
+
+
+div.infos_box div.section dd span.done
+{
+    color: #007000;
+}
+
+
+div.infos_box div.section dd span.done_with_errors
+{
+    color: #FF8040;
+}
+
+
+div.infos_box div.section ul
+{
+    list-style-image: none;
+    list-style-position: outside;
+    list-style-type: none;
+}
+
+
+div.infos_box div.section ul.labels_list
+{
+    list-style-type: disc;
+}
+
+
+div.infos_box div.section li
+{
+    margin-left: 20px;
+}
+
+
+div.infos_box div.section a,
+div.details_box div.content a
+{
+    font-weight: bold;
+    color: #007000;
+    text-decoration: none;
+}
+
+
+div.infos_box div.section a:hover,
+div.details_box div.content a:hover
+{
+    text-decoration: underline;
+}
+
+
+div.infos_box div.section a.disabled
+{
+    color: #FF0000;
+}
+
+
+div.infos_box div.section li span.deleted
+{
+    color: #000000;
+    font-weight: bold;
+}
+
+
+div.infos_box div.tools a
+{
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+
+div.infos_box div.tools span.tool
+{
+    float: right;
+    padding-left: 4px;
+    position: relative;
+    top: -20px;
+}
+
+
+div.infos_box div.tools a.cancel,
+div.infos_box div.tools a.delete
+{
+    background-image: url(/images/heuristic_delete.png);
+}
+
+
+div.infos_box div.tools a.forum
+{
+    background-image: url(/images/heuristic_forum.png);
+}
+
+
+div.infos_box div.tools a.forum_no_comment
+{
+    background-image: url(/images/heuristic_forum_no_comment.png);
+}
+
+
+div.infos_box div.tools a.copy
+{
+    background-image: url(/images/icon_copy.png);
+}
